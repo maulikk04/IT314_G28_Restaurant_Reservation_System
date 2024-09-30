@@ -22,4 +22,5 @@ router.get('/failure', (req, res) => {
     res.redirect(`http://localhost:5173/auth/login?error=User Not Registered`);
 });
 
+
 module.exports = router;
