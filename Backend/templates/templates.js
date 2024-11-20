@@ -102,4 +102,88 @@ const ResetPasswordTemplate = `
 </html>
 `;
 
-module.exports = { EmailVerificationTemplate, ResetPasswordTemplate };
+const BookingConfirmTemplate = `
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #ffd94f;
+            color: #000000;
+            text-align: center;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #16da5b;
+        }
+        .details {
+            margin: 20px 0;
+        }
+        .details p {
+            margin: 5px 0;
+        }
+        .footer {
+            background-color: #f1f1f1;
+            text-align: center;
+            padding: 10px;
+            color: #888888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Restaurant Reservation Confirmation</h1>
+        </div>
+        <div class="content">
+            <h2>Thank you for booking with <span id="site-name"><strong>Fork and Feast</strong></span>!</h2>
+            <p>Your booking has been successfully confirmed. Here are the details of your reservation:</p>
+            <div class="details">
+                <p><strong>Restaurant Name:</strong> <span id="restaurant-name">{Restaurant Name}</span></p>
+                <p><strong>Date:</strong> <span id="date">{Date}</span></p>
+                <p><strong>Time:</strong> <span id="time">{Time}</span></p>
+                <p><strong>Number of Tables Booked:</strong></p>
+                <ul>
+                    <li>Table for 2: <span id="table-for-2">{Count1}</span></li>
+                    <li>Table for 4: <span id="table-for-4">{Count2}</span></li>
+                    <li>Table for 6: <span id="table-for-6">{Count3}</span></li>
+                </ul>
+                <p><strong>Booking Code:</strong> <span id="booking-code">{Booking Code}</span></p>
+            </div>
+            <p>We hope you have a wonderful dining experience at <span id="restaurant-name-again">{Restaurant Name}</span>. If you have any questions or need to make changes to your reservation, please contact us directly.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 Fork and Feast. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+module.exports = { EmailVerificationTemplate, ResetPasswordTemplate, BookingConfirmTemplate };

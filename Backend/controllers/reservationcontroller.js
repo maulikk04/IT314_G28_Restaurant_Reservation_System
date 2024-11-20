@@ -1,5 +1,8 @@
 const Reservation = require('../model/reservationmodel');
-const Restuarant = require('../model/restaurantmodel')
+const Restuarant = require('../model/restaurantmodel');
+const nodemailer = require('nodemailer');
+const User = require('../model/usermodel.js');
+const { BookingConfirmTemplate } = require('../templates/templates.js');
 
 const convertTimeToMinutes = (time) => {
     const [hours, minutes] = time.split(':').map(Number);
@@ -128,6 +131,32 @@ const checkAvailability = async (restaurantId, date, time) => {
     }
   };
 
+
+  const sendBookingEmail = async (email, name, date, time, tables, code) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
+            auth: {
+                user: process.env.email,
+                pass: process.env.password
+            }
+        });
+        console.log(process.env.BACKEND_URL);
+        const mailOptions = {
+            from: process.env.email,
+            to: email,
+            subject: 'Booking Confirmation',
+            html: BookingConfirmTemplate.replace("{Restaurant Name}",name).replace("{Restaurant Name}",name).replace("{Date}",date).replace("{Time}",time).replace("{Count1}",tables.twoPerson).replace("{Count2}",tables.fourPerson).replace("{Count3}",tables.sixPerson).replace("{Booking Code}",code)
+        };
+        
+        await transporter.sendMail(mailOptions);
+        console.log(`Confirmation email sent to ${email}`);
+    } catch (error) {
+        console.log(error);
+    }
+};
 // Function to create reservation
 const createReservation = async (req, res) => {
     try {
@@ -184,6 +213,10 @@ const createReservation = async (req, res) => {
         });
 
         await reservation.save();
+        const restaurantData = await Restuarant.findOne({_id: reservation.restaurantId});
+        const userData = await User.findOne({_id: userId});
+        await sendBookingEmail(userData.email, restaurantData.name, date, time, tables, entryCode);
+        
         res.status(200).json({ 
             message: "Reservation created successfully",
             reservation,

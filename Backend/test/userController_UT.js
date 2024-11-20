@@ -289,7 +289,8 @@ describe('Auth Controller', () => {
                 body: {
                     email: 'testuser@gmail.com',
                     password: '!Password123',
-                    isOwner: false
+                    isOwner: false,
+                    emailVerified: true
                 }
             };
             const res = {
@@ -302,17 +303,49 @@ describe('Auth Controller', () => {
                 email: 'testuser@gmail.com',
                 password: '$2b$10$1234567890123456789012',
                 isOwner: false,
+                emailVerified: true,
                 _id: '12345'
             };
 
             sinon.stub(usermodel, 'findOne').resolves(user);
             sinon.stub(bcrypt, 'compare').resolves(true); // Fixed direct bcrypt usage
+            sinon.stub(jwt, 'sign').returns('mockedToken');
 
             await login_post(req, res);
 
             expect(res.status.calledWith(200)).to.be.true;
-            expect(res.json.calledWithMatch({ message: 'User logged in successfully' })).to.be.true;
-            expect(res.setHeader.calledWith('Authorization')).to.be.true;
+            expect(res.json.calledWithMatch({ 
+                message: 'User logged in successfully',
+                userId: '12345',
+                token: 'mockedToken'
+            })).to.be.true;
+            expect(res.setHeader.calledWith('Authorization', 'Bearer mockedToken')).to.be.true;
+        });
+
+        it('should return 403 for unverified email', async () => {
+            const req = {
+                body: {
+                    email: 'unverified@example.com',
+                    password: '!Password123',
+                    emailVerified: false,
+                    isOwner: false
+                }
+            };
+
+            const user = {
+                email: 'unverified@gmail.com',
+                password: '!Password123',
+                emailVerified: false,
+                isOwner: false,
+                _id: '12345'
+            };
+
+            sinon.stub(usermodel, 'findOne').resolves(user);
+
+            await login_post(req, res);
+
+            expect(res.status.calledWith(403)).to.be.true;
+            expect(res.json.calledWithMatch({ message: 'Please verify your email before logging in. Check your inbox for the confirmation link.' })).to.be.true;
         });
 
         it('should return 401 for invalid email', async () => {
@@ -341,6 +374,7 @@ describe('Auth Controller', () => {
                 body: {
                     email: 'testuser@gmail.com',
                     password: '!WrongPassword123',  // Simulated incorrect password
+                    emailVerified: true,
                     isOwner: false
                 }
             };
@@ -353,6 +387,7 @@ describe('Auth Controller', () => {
                 email: 'testuser@gmail.com',
                 password: '$2b$10$SomeEncryptedPasswordHash', // Simulated encrypted password
                 isOwner: false,
+                emailVerified: true,
                 _id: '12345'
             };
         
@@ -534,12 +569,12 @@ describe('Auth Controller', () => {
             const user = { _id: 'userid', isOwner: true };
 
             sinon.stub(jwt, 'verify').returns(decoded);
-            sinon.stub(usermodel, 'findOne').resolves(user);
+            sinon.stub(usermodel, 'findByIdAndUpdate').resolves(user);
 
             await confirmEmail(req, res);
 
             expect(res.redirect.calledOnce).to.be.true;
-            expect(res.redirect.args[0][0]).to.include('/login?type=owner');
+            expect(res.redirect.args[0][0]).to.include('/login?type=owner&verified=true');
         });
 
         it('should handle invalid token', async () => {
@@ -563,7 +598,7 @@ describe('Auth Controller', () => {
             const decoded = { _id: 'userid' };
             
             sinon.stub(jwt, 'verify').returns(decoded);
-            sinon.stub(usermodel, 'findOne').resolves(null);
+            sinon.stub(usermodel, 'findByIdAndUpdate').resolves(null);
 
             await confirmEmail(req, res);
 
@@ -580,12 +615,12 @@ describe('Auth Controller', () => {
             const user = { _id: 'userid', isOwner: false };
 
             sinon.stub(jwt, 'verify').returns(decoded);
-            sinon.stub(usermodel, 'findOne').resolves(user);
+            sinon.stub(usermodel, 'findByIdAndUpdate').resolves(user);
 
             await confirmEmail(req, res);
 
             expect(res.redirect.calledOnce).to.be.true;
-            expect(res.redirect.args[0][0]).to.include('/login?type=customer');
+            expect(res.redirect.args[0][0]).to.include('/login?type=customer&verified=true');
         });
     });
 
