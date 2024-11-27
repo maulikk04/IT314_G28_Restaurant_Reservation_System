@@ -10,6 +10,7 @@ const app = express();
 const uri = process.env.MONGO_URI;
 const port = process.env.port || 4000;
 const restaurantRoutes = require('./routes/restaurantRoutes');
+const publicRestaurantRoutes = require('./routes/publicRestaurantRoutes');
 const reservationRoutes = require('./routes/reservationRoutes');
 
 app.use(session({
@@ -26,7 +27,9 @@ app.use(passport.session());
 
 app.use('/auth',userRoutes)
 app.use('/restaurant', restaurantRoutes);
+app.use('/api/public/restaurants', publicRestaurantRoutes);
 app.use('/reservation',reservationRoutes);
+
 
 mongoose.connect(uri)
 .then(()=>{

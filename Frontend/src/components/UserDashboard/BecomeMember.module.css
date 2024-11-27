@@ -1,0 +1,147 @@
+.membershipContainer {
+    width: 100%;
+    min-height: 100vh;
+    background-color:#f79c5f;
+  }
+  
+  .plansContainer {
+    padding: 50px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .plansContainer h2 {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.5rem;
+    color: #333;
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .plansGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    padding: 20px;
+  }
+  
+  .planCard {
+    background-color: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 2px solid;
+  }
+  
+  .planCard:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .planHeader {
+    padding: 30px 20px;
+    text-align: center;
+    color: white;
+  }
+  
+  .planHeader h3 {
+    font-size: 2.2rem;
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .price {
+    font-size: 1.8rem;
+    margin: 10px 0 0;
+    font-weight: bold;
+  }
+  
+  .planBenefits {
+    padding: 30px 20px;
+  }
+  
+  .planBenefits ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .planBenefits li {
+    margin: 15px 0;
+    color: #666;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .planBenefits li::before {
+    content: "✓";
+    color: #4CAF50;
+    font-weight: bold;
+  }
+  
+  .subscribeBtn {
+    width: 85%;
+    margin: 20px 7.5%;
+    padding: 15px;
+    border: none;
+    border-radius: 25px;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .subscribeBtn:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .plansContainer h2 {
+      font-size: 2rem;
+    }
+  
+    .plansGrid {
+      grid-template-columns: 1fr;
+      padding: 10px;
+    }
+  
+    .planHeader h3 {
+      font-size: 1.8rem;
+    }
+  
+    .price {
+      font-size: 1.5rem;
+    }
+  
+    .planBenefits li {
+      font-size: 1rem;
+    }
+  }
+  
+  /* Animation for cards */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .planCard {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+  
+  .planCard:nth-child(1) { animation-delay: 0.1s; }
+  .planCard:nth-child(2) { animation-delay: 0.3s; }
+  .planCard:nth-child(3) { animation-delay: 0.5s; }

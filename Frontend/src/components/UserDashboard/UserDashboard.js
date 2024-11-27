@@ -9,7 +9,9 @@ import MyProfile from "./MyProfile";
 import Bookings from "./Bookings";
 import Favourites from "./Favourites";
 import BecomeMember from "./BecomeMember";
-import BookTable from "./BookTable"; // Import the BookTable component
+import AboutUs from "./AboutUs";
+import BookTable from "./BookTable";
+import SearchResults from "./SearchResults";
 import styles from "./UserDashboard.module.css";
 
 const UserDashboard = () => {
@@ -35,8 +37,10 @@ const UserDashboard = () => {
           <Route path="profile" element={<MyProfile />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="favourites" element={<Favourites />} />
-          <Route path="become-member" element={<BecomeMember />} />
+          <Route path="become-a-member" element={<BecomeMember />} />
+          <Route path="about-us" element={<AboutUs />} />
           <Route path="book-table/:restaurantId" element={<BookTable />} />
+          <Route path="search-results" element={<SearchResults />} />
         </Routes>
       </div>
     </div>
