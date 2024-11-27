@@ -1,0 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f5dc; /* Light cream background */
+    margin: 0;
+    padding: 0;
+}
+
+.reservation-system {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: 'Lexend', sans-serif;
+}
+
+.hero {
+    background-image: url(./images/bg3.jpg); /* Replace with your image path */
+    min-height: 300px;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    border-radius: 15px;
+}
+
+.hero.fade-in {
+    opacity: 1;
+}
+
+.hero h1 {
+    font-size: 2.5em;
+    margin: 0;
+}
+
+.reservations {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    flex: 1;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.reservations.fade-in {
+    opacity: 1;
+}
+
+.reservation-box {
+    flex: 1;
+    margin: 0 10px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: transform 0.2s;
+    min-height: 400px;
+    overflow-y: auto;
+}
+
+.reservation-box h2 {
+    text-align: center;
+    color: #333;
+    font-weight: 700;
+}
+
+.reservation-box ul {
+    list-style: none;
+    padding: 0;
+}
+
+.reservation-box li {
+    padding: 10px;
+    border-bottom: 1px solid #eaeaea;
+    background-color: #f9f9f9; /* Light gray background */
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: transform 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.reservation-box li:last-child {
+    border-bottom: none;
+}
+
+.reservation-box li.serviced {
+    background-color: #e8e8e8; /* Dimmer gray for serviced slots */
+    position: relative;
+}
+
+.reservation-box li.cancelled {
+    background-color: #ffe8e8; /* Light red for cancelled slots */
+}
+
+.reservation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+}
+
+.extra-details {
+    margin-top: 10px;
+    background-color: #fdfdfd;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.extra-details p {
+    margin: 5px 0;
+    font-size: 0.85em;
+    color: #555;
+}
+
+/* Status Badge Styles */
+.status {
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.8em;
+}
+
+.status.confirmed {
+    background-color: #66bb6a; /* Green for confirmed slots */
+}
+
+.status.cancelled {
+    background-color: #ef5350; /* Red for cancelled slots */
+}
+
+.status.serviced {
+    background-color: #1e90ff; /* Blue for serviced slots */
+}
+
+/* Terminate Button Styles */
+.terminate-btn {
+    background-color: black; /* Black button background */
+    color: white; /* White text */
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 0.9em;
+}
+
+.terminate-btn:hover {
+    background-color: #333; /* Darker black on hover */
+    transform: scale(1.05); /* Slightly larger on hover */
+}
+
+/* Hover Effects */
+.reservation-box li:hover {
+    transform: scale(1.02); /* Slight zoom on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Distinct Background for Serviced and Cancelled Slots */
+.reservation-box li.serviced:hover {
+    background-color: #d6eaff; /* Light blue hover effect for serviced slots */
+}
+
+.reservation-box li.cancelled:hover {
+    background-color: #ffd6d6; /* Light red hover effect for cancelled slots */
+}
+
+/* Down Arrow Styles */
+.down-arrow {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 12px;
+    height: 12px;
+    border-right: 2px solid #aba7a7; /* Grey color for the arrow */
+    border-bottom: 2px solid #aba7a7; /* Grey color for the arrow */
+    transform: rotate(45deg);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+/* Rotate arrow when clicked (show details) */
+.down-arrow.open {
+    transform: rotate(-135deg); /* Rotate to up arrow */
+}

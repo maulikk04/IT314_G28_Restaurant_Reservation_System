@@ -5,6 +5,8 @@ import RestaurantModal from './RestaurantModal';
 import styles from './Dashboard.module.css';
 import AddRestaurantForm from './AddRestaurantform';
 import { useNavigate } from 'react-router-dom';
+import {jwtDecode} from 'jwt-decode';
+
 const Dashboard = () => {
   const [showAddRestaurantModal, setShowAddRestaurantModal] = useState(false);
   const [restaurants , setRestaurants] = useState([]);
@@ -15,11 +17,21 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  if(!token)
+  {
+    navigate('/login?type=owner');
+  }
+  const decodedToken = jwtDecode(token);
+  if(!decodedToken.isOwner)
+  {
+    navigate('/user-dashboard');
+  }
   useEffect(() => {
     fetchRestaurants();
   }, []);
-  const navigate = useNavigate();
+  
 
   const fetchRestaurants = async () => {
     try {

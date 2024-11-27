@@ -137,7 +137,7 @@ const login_post = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({ message: "Enter valid password" });
         }
-        const token = jwt.sign({ _id: data._id }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ _id: data._id , isOwner:data.isOwner }, process.env.JWT_SECRET, {
             expiresIn: "24h"
         })
         res.setHeader('Authorization', 'Bearer ' + token);

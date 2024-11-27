@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams , useNavigate } from "react-router-dom";
 import restaurantData from "./restaurantData";
 import styles from "./BookTable.module.css";
 
 const BookTable = () => {
   const { restaurantId } = useParams();
+  const navigate = useNavigate();
   const restaurant = restaurantData.find(
-    (rest) => rest.id === parseInt(restaurantId, 10)
+    // (rest) => rest.id === parseInt(restaurantId, 10)
+    (rest) => rest.id === restaurantId
   );
-
   const [activeSection, setActiveSection] = useState("Offers");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoIndex, setPhotoIndex] = useState(0);
@@ -77,7 +78,7 @@ const BookTable = () => {
       Photos: photosRef,
       About: aboutRef,
     };
-      
+
     setTimeout(() => {
       window.scrollTo({
         top: document.documentElement.scrollHeight,
@@ -92,14 +93,6 @@ const BookTable = () => {
     setAvailableTables(null);
   };
 
-  const generateRandomTables = () => {
-    return {
-      2: Math.floor(Math.random() * 5) + 1,
-      4: Math.floor(Math.random() * 4) + 1,
-      6: Math.floor(Math.random() * 2) + 1
-    };
-  };
-
   const isRestaurantOpen = (dateTime) => {
     const openTime = new Date(`${bookingDetails.date} ${restaurant.openingTime}`);
     const closeTime = new Date(`${bookingDetails.date} ${restaurant.closingTime}`);
@@ -107,7 +100,8 @@ const BookTable = () => {
   };
 
   // Check Time Availability
-  const checkAvailability = () => {
+  const checkAvailability = async () => {
+    const token = localStorage.getItem('token');
     const selectedDateTime = new Date(`${bookingDetails.date} ${selectedTime}`);
     const openTime = new Date(`${bookingDetails.date} ${restaurant.openingTime}`);
     const closeTime = new Date(`${bookingDetails.date} ${restaurant.closingTime}`);
@@ -117,35 +111,57 @@ const BookTable = () => {
       return;
     }
 
-    // Calculate times for 1 hour before and after
-    const hourBefore = new Date(selectedDateTime.getTime() - 60*60000);
-    const hourAfter = new Date(selectedDateTime.getTime() + 60*60000);
-
-    const formatTime = (date) => date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
-
-    setTimeSlots({
-      before: { 
-        time: formatTime(hourBefore),
-        tables: isRestaurantOpen(hourBefore) ? generateRandomTables() : { 2: 0, 4: 0, 6: 0 },
-        closed: !isRestaurantOpen(hourBefore)
-      },
-      current: {
-        time: selectedTime,
-        tables: generateRandomTables(),
-        closed: false
-      },
-      after: {
-        time: formatTime(hourAfter),
-        tables: isRestaurantOpen(hourAfter) ? generateRandomTables() : { 2: 0, 4: 0, 6: 0 },
-        closed: !isRestaurantOpen(hourAfter)
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/reservation/checkAvailability`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          restaurantId: restaurantId,
+          date: bookingDetails.date,
+          time: selectedTime
+        })
+      });
+  
+      if(response.status === 401)
+      {
+        localStorage.removeItem('token');
+        navigate('/login');
       }
-    });
+      const data = await response.json();
+      console.log(data);
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
 
-    setShowAvailabilityModal(true);
+      
+
+      // Format the time slots based on API response
+      setTimeSlots({
+        before: {
+          time: data.availability.beforeSlot.time,
+          tables: data.availability.beforeSlot.tables,
+          closed: !isRestaurantOpen(new Date(`${bookingDetails.date} ${data.availability.beforeSlot.time}`))
+        },
+        current: {
+          time: selectedTime,
+          tables: data.availability.currentSlot.tables,
+          closed: false
+        },
+        after: {
+          time: data.availability.afterSlot.time,
+          tables: data.availability.afterSlot.tables,
+          closed: !isRestaurantOpen(new Date(`${bookingDetails.date} ${data.availability.afterSlot.time}`))
+        }
+      });
+
+      setShowAvailabilityModal(true);
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      alert(error)
+    }
   };
 
   const selectTimeSlot = (slot) => {
@@ -200,7 +216,7 @@ const BookTable = () => {
   };
 
   // Calculate the number of tables booked
-  
+
   const getTotalTables = () => {
     return (
       bookingDetails.tables[2] +
@@ -210,13 +226,52 @@ const BookTable = () => {
   };
 
   // Handle booking
-  const handleBooking = () => {
-    const totalTables = getTotalTables();
-    const totalPeople = getTotalPeople();
-    alert(
-      `Booking ${totalTables} table(s) for ${totalPeople} people on ${bookingDetails.date} at ${bookingDetails.time}.`
-    );
-  };
+  const handleBooking = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/reservation/createReservation`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                restaurantId,
+                date: bookingDetails.date,
+                time: bookingDetails.time,
+                tables: {
+                    twoPerson: bookingDetails.tables[2],
+                    fourPerson: bookingDetails.tables[4],
+                    sixPerson: bookingDetails.tables[6]
+                }
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            navigate('/login');
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(data.message);
+        }
+
+        alert(`Reservation successful! Your entry code is: ${data.reservation.entryCode}`);
+        navigate('/user-dashboard');
+    } catch (error) {
+        console.error('Error creating reservation:', error);
+        alert(error.message);
+    }
+};
+
 
   if (!restaurant) {
     return <p className={styles.errorMessage}>Restaurant not found.</p>;
@@ -275,13 +330,13 @@ const BookTable = () => {
         return (
           <div className={styles.aboutSection}>
             <p>
-              <strong>Address:</strong> {restaurant.address}
+              <strong>Address:</strong> {restaurant.location}
             </p>
             <p>
-              <strong>Features:</strong> {restaurant.features.join(", ")}
+              <strong>Features:</strong> {restaurant.features}
             </p>
             <p>
-              <strong>Special Dishes:</strong> {restaurant.specialDishes.join(", ")}
+              <strong>Special Dishes:</strong> {restaurant.specialDishes}
             </p>
             <p>
               <strong>Opening Hours:</strong> {restaurant.openingTime} - {restaurant.closingTime}
@@ -331,7 +386,7 @@ const BookTable = () => {
                 Select Date: {bookingDetails.date || "Choose a date"}
               </button>
             </div>
-            
+
             <div className={styles.formGroup}>
               <h3>Select Time:</h3>
               <div className={styles.timeSelection}>
@@ -343,8 +398,8 @@ const BookTable = () => {
                   min={restaurant.openingTime}
                   max={restaurant.closingTime}
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={checkAvailability}
                   className={styles.checkButton}
                   disabled={!bookingDetails.date || !selectedTime}
@@ -399,7 +454,7 @@ const BookTable = () => {
           </button>
         ))}
       </div>
-      
+
       {/* Content Section */}
       <div className={styles.contentSection}>
         <div className={styles.sectionContent}>{getContentForSection()}</div>
@@ -457,7 +512,7 @@ const BookTable = () => {
                       </div>
                     </div>
                     <div className={styles.buttonContainer}>
-                      <button 
+                      <button
                         onClick={() => selectTimeSlot(timeSlots.before)}
                         className={styles.selectButton}
                         disabled={timeSlots.before.closed}
@@ -481,7 +536,7 @@ const BookTable = () => {
                   </div>
                 </div>
                 <div className={styles.buttonContainer}>
-                  <button 
+                  <button
                     onClick={() => selectTimeSlot(timeSlots.current)}
                     className={styles.selectButton}
                   >
@@ -506,7 +561,7 @@ const BookTable = () => {
                       </div>
                     </div>
                     <div className={styles.buttonContainer}>
-                      <button 
+                      <button
                         onClick={() => selectTimeSlot(timeSlots.after)}
                         className={styles.selectButton}
                         disabled={timeSlots.after.closed}
@@ -520,8 +575,8 @@ const BookTable = () => {
             </div>
 
             <div className={styles.modalActions}>
-              <button 
-                onClick={() => setShowAvailabilityModal(false)} 
+              <button
+                onClick={() => setShowAvailabilityModal(false)}
                 className={styles.closeButton}
               >
                 Close
