@@ -1,0 +1,163 @@
+.aboutContainer {
+    width: 100%;
+    background-color: #f5f5f5;
+  }
+  
+  /* Contact Section */
+  .contactSection {
+    padding: 60px 20px;
+    background-color: white;
+  }
+  
+  .contactGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .contactCard {
+    text-align: center;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .contactCard:hover {
+    transform: translateY(-5px);
+  }
+  
+  .iconWrapper {
+    font-size: 2rem;
+    color: #ff6f61;
+    margin-bottom: 15px;
+  }
+  
+  /* About Section */
+  .aboutSection {
+    padding: 60px 20px;
+    background-color: #f8f8f8;
+  }
+  
+  .storyContent {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+  
+  .storyContent p {
+    margin-bottom: 20px;
+    color: #444;
+  }
+  
+  /* Fun Facts Section */
+  .funFactsSection {
+    padding: 60px 20px;
+    background-color: white;
+  }
+  
+  .factsList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .factCard {
+    text-align: center;
+    padding: 30px;
+    background-color: #ff6f61;
+    color: white;
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+  }
+  
+  .factCard:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Developer Section */
+  .developerSection {
+    padding: 60px 20px;
+    background-color: #f8f8f8;
+  }
+  
+  .developerGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .developerCard {
+    text-align: center;
+    padding: 30px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .developerCard img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+    object-fit: cover;
+  }
+  
+  .socialLinks {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+    font-size: 1.5rem;
+  }
+  
+  .socialLinks svg {
+    cursor: pointer;
+    color: #666;
+    transition: color 0.3s ease;
+  }
+  
+  .socialLinks svg:hover {
+    color: #ff6f61;
+  }
+  
+  /* Common Styles */
+  h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 40px;
+    font-family: 'Playfair Display', serif;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .contactGrid,
+    .factsList,
+    .developerGrid {
+      grid-template-columns: 1fr;
+    }
+  
+    h2 {
+      font-size: 2rem;
+    }
+  
+    .storyContent {
+      font-size: 1rem;
+    }
+  }
