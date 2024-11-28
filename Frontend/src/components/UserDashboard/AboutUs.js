@@ -18,7 +18,7 @@ const AboutUs = () => {
     {
       icon: <FaMapMarkerAlt />,
       title: "Address",
-      details: "Mumbai Institute of Technology, Mumbai, India"
+      details: "Dhirubhai Ambani Institute of Information and Communication Technology, Gandhinagar, India"
     }
   ];
 

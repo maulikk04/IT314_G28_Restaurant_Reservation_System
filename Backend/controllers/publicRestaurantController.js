@@ -14,12 +14,14 @@ const getAllRestaurants = async (req, res) => {
         // No authentication required, fetch all restaurants
         const restaurantData = await Restaurant.find({})
             .select('name location cuisines image openingTime closingTime phoneNumber foodPreference'); // Select only needed fields
-
+     
+        
         const transformedData = restaurantData.map(restaurant => ({
             ...restaurant.toObject(),
-            image: restaurant.image[0] // First image for card display
+            image: restaurant.image[0],
+            Image: restaurant.image
         }));
-
+        
         res.status(200).json({ 
             success: true,
             restaurantData: transformedData 

@@ -6,24 +6,22 @@ const Membership = () => {
   const membershipPlans = [
     {
       tier: "Silver",
-      price: "₹999/year",
+      price: "₹999/year", 
       color: "#C0C0C0",
       benefits: [
-        "10% off on all orders",
-        "Priority customer support",
-        "Early access to events",
-        "Free delivery on orders > ₹500"
+        "Priority table reservations",
+        "10% discount on dining",
+        
       ]
     },
     {
       tier: "Gold",
       price: "₹1999/year",
-      color: "#FFD700",
+      color: "#FFD700", 
       benefits: [
-        "15% off on all orders",
-        "24/7 priority support",
-        "Free delivery on all orders",
-        "Birthday month special offers"
+        "VIP table reservations",
+        "15% discount on dining",
+        "24/7 priority support"
       ]
     },
     {
@@ -31,10 +29,10 @@ const Membership = () => {
       price: "₹3999/year",
       color: "#E5E4E2",
       benefits: [
-        "25% off on all orders",
-        "Free delivery & priority service",
-        "Birthday month special offers",
-        "Quarterly dining vouchers"
+        "Instant table reservations",
+        "25% discount on dining", 
+        "Dedicated concierge service",
+        "Table bookings on festivals"
       ]
     }
   ];
@@ -69,7 +67,7 @@ const Membership = () => {
               <div className={styles.planBenefits}>
                 <ul>
                   {plan.benefits.map((benefit, index) => (
-                    <li key={index}>✓ {benefit}</li>
+                    <li key={index}> {benefit}</li>
                   ))}
                 </ul>
               </div>

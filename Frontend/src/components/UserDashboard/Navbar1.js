@@ -8,7 +8,7 @@ const Navbar1 = ({ filterByLocation }) => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("All Locations");
-  const [locations, setLocations] = useState(["All Locations"]);
+  const [locations] = useState(["All Locations", "Ahmedabad", "Surat", "Mumbai", "Delhi", "Bangalore", "Kolkata", "Gandhinagar"]);
   const [searchTerm, setSearchTerm] = useState("");
   const [restaurants, setRestaurants] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -18,9 +18,6 @@ const Navbar1 = ({ filterByLocation }) => {
     const getLocations = async () => {
       const restaurantsData = await fetchRestaurants();
       setRestaurants(restaurantsData);
-      const allLocations = restaurantsData.map(restaurant => restaurant.location);
-      const uniqueLocations = ["All Locations", ...new Set(allLocations)];
-      setLocations(uniqueLocations);
     };
     getLocations();
   }, []);
@@ -160,7 +157,7 @@ const Navbar1 = ({ filterByLocation }) => {
           className={styles.optionButton} 
           onClick={() => navigate("/user-dashboard/about-us")}
         >
-          About Us
+          Contact Us
         </button>
         <button
           className={styles.optionButton}

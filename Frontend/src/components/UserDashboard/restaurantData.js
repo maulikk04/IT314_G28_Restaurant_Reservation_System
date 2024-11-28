@@ -10,6 +10,9 @@ const fetchRestaurants = async () => {
                 name: restaurant.name || '',
                 location: restaurant.location || '',
                 image: restaurant.image ? `http://localhost:4000/restaurant/images/${restaurant.image}` : '',
+                Image: Array.isArray(restaurant.Image) 
+                ? restaurant.Image.map(img => `http://localhost:4000/restaurant/images/${img}`)
+                : [],
                 cuisines: restaurant.cuisines || '',
                 openingTime: restaurant.openingTime || '',
                 closingTime: restaurant.closingTime || '',
