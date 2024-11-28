@@ -1,15 +1,34 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams , useNavigate } from "react-router-dom";
-import restaurantData from "./restaurantData";
+import fetchRestaurants from "./restaurantData";
 import styles from "./BookTable.module.css";
 
 const BookTable = () => {
   const { restaurantId } = useParams();
   const navigate = useNavigate();
-  const restaurant = restaurantData.find(
-    // (rest) => rest.id === parseInt(restaurantId, 10)
-    (rest) => rest.id === restaurantId
-  );
+  const [restaurant, setRestaurant] = useState(null);
+
+  useEffect(() => {
+    const getRestaurantData = async () => {
+      try {
+        const restaurantData = await fetchRestaurants();
+        // Convert restaurantData to array if it's an object
+        const restaurantArray = restaurantData ? 
+          (Array.isArray(restaurantData) ? restaurantData : [restaurantData]) : 
+          [];
+        
+        const foundRestaurant = restaurantArray.find(
+          (rest) => rest.id === restaurantId
+        );
+        setRestaurant(foundRestaurant);
+      } catch (error) {
+        console.error('Error fetching restaurant data:', error);
+      }
+    };
+
+    getRestaurantData();
+  }, [restaurantId]);
+
   const [activeSection, setActiveSection] = useState("Offers");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoIndex, setPhotoIndex] = useState(0);
@@ -293,15 +312,15 @@ const BookTable = () => {
           <p>No offers available at the moment.</p>
         );
       case "Menu":
-        return restaurant.menus?.length ? (
+        return restaurant.menuImage?.length ? (
           <div className={styles.photoGrid}>
-            {restaurant.menus.map((menuPhoto, index) => (
+            {restaurant.menuImage.map((menuPhoto, index) => (
               <div key={index} className={styles.photoCard}>
                 <img
                   src={menuPhoto}
                   alt={`Menu ${index + 1}`}
                   className={styles.photo}
-                  onClick={() => handlePhotoClick(menuPhoto, index, restaurant.menus)}
+                  onClick={() => handlePhotoClick(menuPhoto, index, restaurant.menuImage)}
                 />
               </div>
             ))}
@@ -310,9 +329,9 @@ const BookTable = () => {
           <p>No menu photos available.</p>
         );
       case "Photos":
-        return restaurant.photos?.length ? (
+        return restaurant.Image?.length ? (
           <div className={styles.photoGrid}>
-            {restaurant.photos.map((photo, index) => (
+            {restaurant.Image.map((photo, index) => (
               <div key={index} className={styles.photoCard}>
                 <img
                   src={photo}
@@ -362,7 +381,7 @@ const BookTable = () => {
             <h1 className={styles.name}>{restaurant.name}</h1>
             <p className={styles.address}>{restaurant.address}</p>
             <p className={styles.cuisine}>
-              <strong>Cuisine:</strong> {restaurant.cuisine}
+              <strong>Cuisine:</strong> {restaurant.cuisines}
             </p>
             <p className={styles.rating}>
               <strong>Rating:</strong> {restaurant.rating} ⭐

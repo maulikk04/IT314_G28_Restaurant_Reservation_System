@@ -13,8 +13,10 @@ router.get('/all', async (req, res) => {
         const restaurantData = await Restaurant.find({});
         const transformedData = restaurantData.map(restaurant => ({
             ...restaurant.toObject(),
-            image: restaurant.image[0]
+            image: restaurant.image[0],
+            Image: restaurant.image
         }));
+        
         res.status(200).json({ 
             success: true,
             restaurantData: transformedData 
