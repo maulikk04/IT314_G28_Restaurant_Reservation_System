@@ -1,7 +1,7 @@
 const chai = require('chai');
 const sinon = require('sinon');
-const bcrypt = require('bcrypt'); // Added explicit import for bcrypt
-const nodemailer = require('nodemailer'); // Added explicit import for nodemailer
+const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const dns = require('dns');
 const { signup_post, login_post, forgotPassword, resetPassword, confirmEmail, errorHandle } = require('../controllers/userController');
@@ -43,12 +43,15 @@ describe('Auth Controller', () => {
                 json: sinon.stub()
             };
     
-            sinon.stub(usermodel, 'findOne').resolves({ email: 'testuser@gmail.com' });
+            const findOneStub = sinon.stub(usermodel, 'findOne');
+            findOneStub.withArgs({ email: 'testuser@gmail.com' }).resolves({ email: 'testuser@gmail.com' });
+            findOneStub.resolves(null);
     
             await signup_post(req, res);
     
             expect(res.status.calledWith(409)).to.be.true;
             expect(res.json.calledWithMatch({ message: 'User already exists' })).to.be.true;
+            expect(findOneStub.calledWith({ email: 'testuser@gmail.com' })).to.be.true;
         });
 
         it('should return 400 for an invalid email domain', async () => {
@@ -68,7 +71,6 @@ describe('Auth Controller', () => {
 
             sinon.stub(usermodel, 'findOne').resolves(null);
             sinon.stub(dns, 'resolveMx').callsFake((domain, callback) => {
-                // Immediately call the callback with empty result to simulate invalid domain
                 setImmediate(() => callback(null, []));
             });
 
@@ -79,7 +81,7 @@ describe('Auth Controller', () => {
         });
 
         it('should return 401 if passwords do not match', async function() {
-            this.timeout(5000); // Increase timeout to 5 seconds
+            this.timeout(5000);
 
             const req = {
                 body: {
@@ -118,17 +120,42 @@ describe('Auth Controller', () => {
                     isOwner: false
                 }
             };
-
+    
+            // Mock usermodel.findOne to return null (user doesn't exist)
             sinon.stub(usermodel, 'findOne').resolves(null);
-            sinon.stub(usermodel.prototype, 'save').rejects(new Error('Database error'));
-            sinon.stub(dns, 'resolveMx').callsFake((domain, callback) => {
-                callback(null, [{exchange: 'test.com', priority: 10}]);
+    
+            // Mock save to check the user object properties before rejecting
+            sinon.stub(usermodel.prototype, 'save').callsFake(function() {
+                expect(this.name).to.equal(req.body.name);
+                expect(this.email).to.equal(req.body.email);
+                expect(this.password).to.exist;
+                expect(this.isOwner).to.equal(req.body.isOwner);
+                return Promise.reject(new Error('Database error'));
             });
-
+    
+            // Mock jwt.sign to verify payload and options
+            const jwtSignStub = sinon.stub(jwt, 'sign').callsFake((payload, secret, options) => {
+                expect(payload).to.have.property('id').that.is.not.empty;
+                expect(options).to.have.property('expiresIn').that.equals('1h');
+                return 'mock-token';
+            });
+    
+            sinon.stub(dns, 'resolveMx').callsFake((domain, callback) => {
+                if (domain === 'gmail.com') {
+                    callback(null, [{exchange: 'test.com', priority: 10}]);
+                } else {
+                    callback(new Error('Invalid domain'), null);
+                }
+            });
+    
             await signup_post(req, res);
-
+    
+            // Verify error response
             expect(res.status.calledWith(400)).to.be.true;
-            expect(res.json.calledWithMatch({ message: 'Database error' })).to.be.true;
+            expect(res.json.calledWithMatch({ 
+                message: sinon.match.string.and(sinon.match.truthy)
+            })).to.be.true;
+            expect(res.json.lastCall.args[0].message).to.equal('Database error');
         });
 
         it('should handle error when sending confirmation email fails', async () => {
@@ -197,6 +224,30 @@ describe('Auth Controller', () => {
             const user = {
                 email: 'testuser@gmail.com',
                 isOwner: true,  // User is an owner
+                _id: new mongoose.Types.ObjectId(),
+                name: 'TestUser'
+            };
+    
+            const findOneStub = sinon.stub(usermodel, 'findOne').resolves(user);
+    
+            await forgotPassword(req, res);
+    
+            expect(res.status.calledWith(401)).to.be.true;
+            expect(res.json.calledWithMatch({ message: 'Unauthorized' })).to.be.true;
+            expect(findOneStub.calledWith({ email: req.body.email })).to.be.true;
+        });
+
+        it('should return 401 when customer tries to use owner route', async () => {
+            const req = {
+                body: {
+                    email: 'testuser@gmail.com',
+                    userType: 'owner'
+                }
+            };
+    
+            const user = {
+                email: 'testuser@gmail.com',
+                isOwner: false,
                 _id: new mongoose.Types.ObjectId(),
                 name: 'TestUser'
             };
@@ -307,11 +358,13 @@ describe('Auth Controller', () => {
                 _id: '12345'
             };
 
-            sinon.stub(usermodel, 'findOne').resolves(user);
-            sinon.stub(bcrypt, 'compare').resolves(true); // Fixed direct bcrypt usage
+            const findOneStub = sinon.stub(usermodel, 'findOne').resolves(user);
+            sinon.stub(bcrypt, 'compare').resolves(true);
             sinon.stub(jwt, 'sign').returns('mockedToken');
 
             await login_post(req, res);
+
+            expect(findOneStub.calledWith({ email: req.body.email })).to.be.true;
 
             expect(res.status.calledWith(200)).to.be.true;
             expect(res.json.calledWithMatch({ 
@@ -452,7 +505,7 @@ describe('Auth Controller', () => {
             const tokendata = {
                 userid: '12345',
                 token: 'validtoken',
-                deleteOne: sinon.stub().resolves() // Ensure deleteOne exists
+                deleteOne: sinon.stub().resolves()
             };
             const user = {
                 _id: '12345',
@@ -564,17 +617,69 @@ describe('Auth Controller', () => {
             req = {
                 params: { token: 'validtoken' }
             };
-
+        
             const decoded = { _id: 'userid' };
             const user = { _id: 'userid', isOwner: true };
-
+        
             sinon.stub(jwt, 'verify').returns(decoded);
-            sinon.stub(usermodel, 'findByIdAndUpdate').resolves(user);
-
+            
+            // Create a more sophisticated stub for findByIdAndUpdate
+            const findByIdAndUpdateStub = sinon.stub(usermodel, 'findByIdAndUpdate');
+            
+            // Store the update parameters and options for verification
+            let capturedUpdateParams;
+            let capturedOptions;
+            
+            findByIdAndUpdateStub.callsFake((id, updateParams, options) => {
+                capturedUpdateParams = updateParams;
+                capturedOptions = options;
+                
+                // Verify that emailVerified is true and sessionToken exists
+                expect(updateParams).to.have.property('emailVerified', true);
+                expect(updateParams).to.have.property('sessionToken').that.is.a('string');
+                
+                // Create a user object that includes the updates
+                const updatedUser = {
+                    ...user,
+                    emailVerified: updateParams.emailVerified,
+                    sessionToken: updateParams.sessionToken
+                };
+                
+                // If options.new is false, return the original user
+                if (options && options.new === false) {
+                    return Promise.resolve(user);
+                }
+                
+                // Otherwise return the updated user
+                return Promise.resolve(updatedUser);
+            });
+        
             await confirmEmail(req, res);
-
+        
+            // Verify the update parameters
+            expect(capturedUpdateParams).to.have.property('emailVerified', true);
+            expect(capturedUpdateParams).to.have.property('sessionToken').that.is.a('string');
+            expect(Object.keys(capturedUpdateParams).length).to.equal(2); // Ensure no extra fields
+        
+            // Verify the options
+            expect(capturedOptions).to.deep.equal({ new: true, runValidators: false });
+            
+            // Verify that findByIdAndUpdate was called with correct parameters
+            expect(findByIdAndUpdateStub.calledWith(
+                decoded._id,
+                sinon.match.has('emailVerified', true)
+                .and(sinon.match.has('sessionToken', sinon.match.string)),
+                { new: true, runValidators: false }
+            )).to.be.true;
+        
+            // Verify the redirect
             expect(res.redirect.calledOnce).to.be.true;
             expect(res.redirect.args[0][0]).to.include('/login?type=owner&verified=true');
+            
+            // Verify that the updated user has the correct properties
+            const updatedUser = await findByIdAndUpdateStub.returnValues[0];
+            expect(updatedUser.emailVerified).to.be.true;
+            expect(updatedUser.sessionToken).to.be.a('string');
         });
 
         it('should handle invalid token', async () => {
@@ -627,47 +732,87 @@ describe('Auth Controller', () => {
     describe('sendresetpasswordmail', () => {
         let sendMailStub;
         let transporterStub;
+        let consoleLogSpy;
     
         beforeEach(() => {
-            // Create a stub for sendMail that we can control
+            // Create stubs for nodemailer
             sendMailStub = sinon.stub();
-            // Create a stub for the transporter
             transporterStub = {
                 sendMail: sendMailStub
             };
-            // Stub the createTransport method to return our stub transporter
-            sinon.stub(nodemailer, 'createTransport').returns(transporterStub);
+            
+            // Spy on console.log before each test
+            consoleLogSpy = sinon.spy(console, 'log');
+    
+            sinon.stub(nodemailer, 'createTransport').callsFake((config) => {
+                if (!config.host || config.host === '') {
+                    throw new Error('Host is missing or empty');
+                }
+                if (config.secure !== true) {
+                    throw new Error('Secure flag is not true');
+                }
+                if (config.requireTLS !== true) {
+                    throw new Error('requireTLS flag is not true');
+                }
+                if (!config.auth || !config.auth.user || !config.auth.pass) {
+                    throw new Error('Auth configuration is missing or invalid');
+                }
+                return transporterStub;
+            });
         });
     
         afterEach(() => {
             sinon.restore();
+            consoleLogSpy.restore();
         });
     
-        it('should handle email sending error', (done) => {
+        it('should handle email sending error with proper error check', (done) => {
             const name = 'Test User';
             const email = 'test@example.com';
             const token = 'test-token';
     
-            // Configure sendMail to call its callback with an error
             const testError = new Error('Email sending failed');
+            
+            // Track if error callback was actually triggered
+            let errorCallbackTriggered = false;
+            
             sendMailStub.callsFake((options, callback) => {
+                errorCallbackTriggered = true;
                 callback(testError, null);
             });
     
-            // Spy on console.log
-            const consoleLogSpy = sinon.spy(console, 'log');
-    
-            // We need to import and call the actual sendresetpasswordmail function
             const { sendresetpasswordmail } = require('../controllers/userController');
     
             sendresetpasswordmail(name, email, token)
                 .then(() => {
-                    // Verify that sendMail was called
+                    expect(errorCallbackTriggered).to.be.true;
                     expect(sendMailStub.calledOnce).to.be.true;
-                    
-                    // Verify that the error was logged
-                    expect(consoleLogSpy.calledWith(testError)).to.be.true;
-                    
+                    expect(consoleLogSpy.firstCall.args[0]).to.equal(testError);
+                    expect(consoleLogSpy.firstCall.args[0]).to.be.instanceof(Error);
+                    done();
+                })
+                .catch(done);
+        });
+    
+        it('should properly log success message with response info', (done) => {
+            const name = 'Test User';
+            const email = 'test@example.com';
+            const token = 'test-token';
+            
+            const successResponse = { response: 'Success Response' };
+            
+            sendMailStub.callsFake((options, callback) => {
+                callback(null, successResponse);
+            });
+    
+            const { sendresetpasswordmail } = require('../controllers/userController');
+    
+            sendresetpasswordmail(name, email, token)
+                .then(() => {
+                    expect(sendMailStub.calledOnce).to.be.true;
+                    expect(consoleLogSpy.firstCall.args[0]).to.include('email send successfully');
+                    expect(consoleLogSpy.firstCall.args[0]).to.include(successResponse.response);
+                    expect(consoleLogSpy.firstCall.args[0].length).to.be.greaterThan(0);
                     done();
                 })
                 .catch(done);
@@ -678,13 +823,11 @@ describe('Auth Controller', () => {
             const email = 'test@example.com';
             const token = 'test-token';
     
-            // Configure sendMail to capture the options
             sendMailStub.callsFake((options, callback) => {
-                // Verify mail options
                 expect(options.to).to.equal(email);
                 expect(options.subject).to.equal('For reset password');
-                expect(options.html).to.include(name); // Verify template includes name
-                expect(options.html).to.include(token); // Verify template includes token
+                expect(options.html).to.include(name);
+                expect(options.html).to.include(token);
                 callback(null, { response: 'Success' });
             });
     
@@ -693,6 +836,29 @@ describe('Auth Controller', () => {
             sendresetpasswordmail(name, email, token)
                 .then(() => {
                     expect(sendMailStub.calledOnce).to.be.true;
+                    const mailOptions = sendMailStub.getCall(0).args[0];
+                    expect(mailOptions.html).to.include(name);
+                    expect(mailOptions.html).to.not.include('{Username}');
+                    expect(mailOptions.html).to.not.include('{url}');
+                    done();
+                })
+                .catch(done);
+        });
+
+        it('should handle sendMail errors correctly', (done) => {
+            nodemailer.createTransport.restore();
+            sinon.stub(nodemailer, 'createTransport').returns(transporterStub);
+    
+            const mailError = new Error('Mail sending failed');
+            sendMailStub.callsFake((options, callback) => {
+                callback(mailError, null);
+            });
+    
+            const { sendresetpasswordmail } = require('../controllers/userController');
+    
+            sendresetpasswordmail('Test User', 'test@example.com', 'test-token')
+                .then(() => {
+                    expect(consoleLogSpy.calledWith(mailError)).to.be.true;
                     done();
                 })
                 .catch(done);
@@ -702,7 +868,6 @@ describe('Auth Controller', () => {
     describe('sendConfirmationEmail', () => {
         let sendMailStub;
         let transporterStub;
-        let consoleLogSpy;
     
         beforeEach(() => {
             // Create stubs for nodemailer
@@ -710,7 +875,24 @@ describe('Auth Controller', () => {
             transporterStub = {
                 sendMail: sendMailStub
             };
-            sinon.stub(nodemailer, 'createTransport').returns(transporterStub);
+            sinon.stub(nodemailer, 'createTransport').callsFake((config) => {
+                // Validate host
+                if (!config.host || config.host === '') {
+                    throw new Error('Host is missing or empty');
+                }
+        
+                // Validate secure
+                if (config.secure !== true) {
+                    throw new Error('Secure flag is not true');
+                }
+        
+                // Validate auth
+                if (!config.auth || !config.auth.user || !config.auth.pass) {
+                    throw new Error('Auth configuration is missing or invalid');
+                }
+        
+                return transporterStub;
+            });
             
             // Spy on console.log
             consoleLogSpy = sinon.spy(console, 'log');
@@ -737,6 +919,10 @@ describe('Auth Controller', () => {
             expect(mailOptions).to.have.property('subject', 'Account Confirmation');
             expect(mailOptions.html).to.include(name);
             expect(mailOptions.html).to.include(token);
+
+            expect(mailOptions.html).to.include(name);
+            expect(mailOptions.html).to.not.include('{Username}');
+            expect(mailOptions.html).to.not.include('{url}');
         });
     });
 

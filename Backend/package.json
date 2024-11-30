@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
+    "test:userController": "mocha test/userController_test.js",
+    "test:mutation:user": "stryker run stryker.user.config.json",
     "coverage": "nyc --reporter=lcov --reporter=text npm run test",
+    "coverage:userController": "nyc --reporter=lcov --reporter=text mocha test/userController_test.js",
     "start": "node app.js",
     "dev": "nodemon app.js"
   },
@@ -42,6 +45,8 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^8.6.0",
+    "@stryker-mutator/mocha-runner": "^8.6.0",
     "chai": "^4.5.0",
     "chai-http": "^5.1.1",
     "jsonwebtoken": "^9.0.2",

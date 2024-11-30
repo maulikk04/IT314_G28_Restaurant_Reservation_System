@@ -2,15 +2,15 @@ import axios from 'axios';
 
 const fetchRestaurants = async () => {
     try {
-        const response = await axios.get('http://localhost:4000/api/public/restaurants/all');
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/public/restaurants/all`);
         if (response.data?.success && Array.isArray(response.data.restaurantData)) {
             return response.data.restaurantData.map(restaurant => ({
                 id: restaurant._id,
                 name: restaurant.name || '',
                 location: restaurant.location || '',
-                image: restaurant.image ? `http://localhost:4000/restaurant/images/${restaurant.image}` : '',
+                image: restaurant.image ? `${process.env.REACT_APP_API_URL}/restaurant/images/${restaurant.image}` : '',
                 Image: Array.isArray(restaurant.Image) 
-                ? restaurant.Image.map(img => `http://localhost:4000/restaurant/images/${img}`)
+                ? restaurant.Image.map(img => `${process.env.REACT_APP_API_URL}/restaurant/images/${img}`)
                 : [],
                 cuisines: restaurant.cuisines || '',
                 openingTime: restaurant.openingTime || '',
@@ -20,7 +20,7 @@ const fetchRestaurants = async () => {
                 specialDishes: restaurant.specialDishes || '',
                 features: restaurant.features || '',
                 menuImage: Array.isArray(restaurant.menuImage) 
-                    ? restaurant.menuImage.map(img => `http://localhost:4000/restaurant/images/${img}`)
+                    ? restaurant.menuImage.map(img => `${process.env.REACT_APP_API_URL}/restaurant/images/${img}`)
                     : []
             }));
         }
