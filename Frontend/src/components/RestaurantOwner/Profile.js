@@ -1,14 +1,14 @@
 // src/Profile.js
 import React from 'react';
 import './Profile.css'; // Import the CSS file for styling
-import profileImage from './profilephoto.jpeg'; // Adjust the path as necessary
+//import profileImage from './profilephoto.jpeg'; // Adjust the path as necessary
 
 const Profile = () => {
     return (
         <div className="profile-container">
             <div className="profile-box">
                 <img 
-                    src={profileImage} // Use the imported image
+                    //src={profileImage} // Use the imported image
                     alt="Profile"
                     className="profile-photo"
                 />

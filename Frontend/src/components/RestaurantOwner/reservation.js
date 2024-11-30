@@ -1,362 +1,109 @@
 import './reservation.css';
-import './reset.css';
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import useWebSocket from './useWebSocket'; // Import the custom hook
 
 const Reservation = () => {
-    const [bookings, setBookings] = useState([
-        { 
-            code: 'R001', 
-            date: '2023-10-01', 
-            time: '12:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'John Doe', 
-            people: 2,
-            tableFor2: 1,
-            tableFor4: 0,
-            tableFor6: 0,
-            showDetails: false, // Track visibility of extra details
-        },
-        { 
-            code: 'R002', 
-            date: '2023-10-01', 
-            time: '12:45 PM', 
-            duration: 1, 
-            status: 'Cancelled', 
-            customerName: 'Jane Smith', 
-            people: 4,
-            tableFor2: 0,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R003', 
-            date: '2023-10-01', 
-            time: '1:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Alice Brown', 
-            people: 6,
-            tableFor2: 0,
-            tableFor4: 0,
-            tableFor6: 1,
-            showDetails: false,
-        },
-        { 
-            code: 'R004', 
-            date: '2023-10-01', 
-            time: '2:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Mark White', 
-            people: 8,
-            tableFor2: 0,
-            tableFor4: 2,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R005', 
-            date: '2023-10-01', 
-            time: '2:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Eva Green', 
-            people: 10,
-            tableFor2: 0,
-            tableFor4: 2,
-            tableFor6: 1,
-            showDetails: false,
-        },
-        { 
-            code: 'R006', 
-            date: '2023-10-01', 
-            time: '3:00 PM', 
-            duration: 1, 
-            status: 'Cancelled', 
-            customerName: 'Robert King', 
-            people: 4,
-            tableFor2: 0,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R007', 
-            date: '2023-10-01', 
-            time: '3:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Sophia Martin', 
-            people: 5,
-            tableFor2: 1,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R008', 
-            date: '2023-10-01', 
-            time: '4:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Liam Taylor', 
-            people: 12,
-            tableFor2: 0,
-            tableFor4: 3,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R009', 
-            date: '2023-10-01', 
-            time: '4:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Olivia Walker', 
-            people: 4,
-            tableFor2: 0,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R010', 
-            date: '2023-10-01', 
-            time: '5:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Ethan Scott', 
-            people: 2,
-            tableFor2: 1,
-            tableFor4: 0,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R011', 
-            date: '2023-10-01', 
-            time: '5:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Mia Carter', 
-            people: 3,
-            tableFor2: 1,
-            tableFor4: 0,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R012', 
-            date: '2023-10-01', 
-            time: '6:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Jack Wilson', 
-            people: 6,
-            tableFor2: 0,
-            tableFor4: 0,
-            tableFor6: 1,
-            showDetails: false,
-        },
-        { 
-            code: 'R013', 
-            date: '2023-10-02', 
-            time: '12:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Sophia Lee', 
-            people: 2,
-            tableFor2: 1,
-            tableFor4: 0,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R014', 
-            date: '2023-10-02', 
-            time: '1:00 PM', 
-            duration: 1, 
-            status: 'Cancelled', 
-            customerName: 'Lucas Harris', 
-            people: 5,
-            tableFor2: 0,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R015', 
-            date: '2023-10-02', 
-            time: '1:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Hannah Davis', 
-            people: 4,
-            tableFor2: 0,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R016', 
-            date: '2023-10-02', 
-            time: '2:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Aidan Clark', 
-            people: 8,
-            tableFor2: 0,
-            tableFor4: 2,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R017', 
-            date: '2023-10-02', 
-            time: '2:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Ella Martin', 
-            people: 10,
-            tableFor2: 0,
-            tableFor4: 2,
-            tableFor6: 1,
-            showDetails: false,
-        },
-        { 
-            code: 'R018', 
-            date: '2023-10-02', 
-            time: '3:00 PM', 
-            duration: 1, 
-            status: 'Cancelled', 
-            customerName: 'Noah Lewis', 
-            people: 6,
-            tableFor2: 0,
-            tableFor4: 0,
-            tableFor6: 1,
-            showDetails: false,
-        },
-        { 
-            code: 'R019', 
-            date: '2023-10-02', 
-            time: '3:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'James Walker', 
-            people: 4,
-            tableFor2: 0,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R020', 
-            date: '2023-10-02', 
-            time: '4:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Charlotte Young', 
-            people: 2,
-            tableFor2: 1,
-            tableFor4: 0,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R021', 
-            date: '2023-10-02', 
-            time: '4:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'David Scott', 
-            people: 6,
-            tableFor2: 0,
-            tableFor4: 0,
-            tableFor6: 1,
-            showDetails: false,
-        },
-        { 
-            code: 'R022', 
-            date: '2023-10-02', 
-            time: '5:00 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Lucas Hill', 
-            people: 5,
-            tableFor2: 0,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R023', 
-            date: '2023-10-02', 
-            time: '5:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Benjamin Hall', 
-            people: 2,
-            tableFor2: 1,
-            tableFor4: 0,
-            tableFor6: 0,
-            showDetails: false,
-        },
-        { 
-            code: 'R024', 
-            date: '2023-10-02', 
-            time: '6:00 PM', 
-            duration: 1, 
-            status: 'Cancelled', 
-            customerName: 'Zoe Adams', 
-            people: 6,
-            tableFor2: 0,
-            tableFor4: 0,
-            tableFor6: 1,
-            showDetails: false,
-        },
-        { 
-            code: 'R025', 
-            date: '2023-10-02', 
-            time: '6:30 PM', 
-            duration: 1, 
-            status: 'Confirmed', 
-            customerName: 'Amelia King', 
-            people: 4,
-            tableFor2: 0,
-            tableFor4: 1,
-            tableFor6: 0,
-            showDetails: false,
+    const { id } = useParams();
+    const [bookings, setBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { isConnected } = useWebSocket(id);
+
+    const fetchReservations = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(
+                `${process.env.REACT_APP_API_URL}/reservation/${id}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch reservations');
+            }
+
+            const data = await response.json();
+
+            // Transform the data to match your component's structure
+            const transformedBookings = data.data.map(reservation => ({
+                code: reservation.entryCode,
+                date: new Date(reservation.date).toISOString().split('T')[0],
+                time: reservation.time,
+                duration: 1,
+                status: reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1),
+                customerName: reservation.userId.name,
+                people: reservation.tables.twoPerson * 2 + reservation.tables.fourPerson * 4 + reservation.tables.sixPerson * 6,
+                tableFor2: reservation.tables.twoPerson,
+                tableFor4: reservation.tables.fourPerson,
+                tableFor6: reservation.tables.sixPerson,
+                showDetails: false
+            }));
+
+            setBookings(sortBookings(transformedBookings));
+            setError(null);
+        } catch (err) {
+            setError('Failed to load reservations. Please try again.');
+            console.error('Error:', err);
+        } finally {
+            setLoading(false);
         }
-    ]);
+    };
+
+    useEffect(() => {
+        fetchReservations();
+    }, [id]);
 
     // Sort bookings based on nearest upcoming slot
     const sortBookings = (list) => {
-        return list.sort((a, b) => {
+        return [...list].sort((a, b) => {
             const aDate = new Date(`${a.date} ${a.time}`);
             const bDate = new Date(`${b.date} ${b.time}`);
             return aDate - bDate;
         });
     };
 
-    const handleTerminate = (code) => {
-        setBookings((prev) => {
-            const updatedBookings = prev.map((booking) => {
-                if (booking.code === code) {
-                    return {
-                        ...booking,
-                        status: booking.status === 'Confirmed' ? 'Serviced' : booking.status,
-                        terminated: true,
-                    };
+    const handleTerminate = async (code) => {
+        try {
+            // Add API call to update status on the backend
+            const response = await fetch(
+                `${process.env.REACT_APP_API_URL}/reservation/${id}/terminate/${code}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
                 }
-                return booking;
-            });
+            );
 
-            const [terminatedSlot] = updatedBookings.filter((booking) => booking.code === code);
-            const remainingSlots = updatedBookings.filter((booking) => booking.code !== code);
-            return [...remainingSlots, terminatedSlot];
-        });
+            if (!response.ok) {
+                throw new Error('Failed to update reservation status');
+            }
+
+            setBookings((prev) => {
+                const updatedBookings = prev.map((booking) => {
+                    if (booking.code === code) {
+                        return {
+                            ...booking,
+                            status: booking.status === 'Confirmed' ? 'Serviced' : booking.status,
+                            terminated: true,
+                        };
+                    }
+                    return booking;
+                });
+
+                const [terminatedSlot] = updatedBookings.filter((booking) => booking.code === code);
+                const remainingSlots = updatedBookings.filter((booking) => booking.code !== code);
+                return [...remainingSlots, terminatedSlot];
+            });
+        } catch (err) {
+            setError('Failed to update reservation status. Please try again.');
+            console.error('Error:', err);
+        }
     };
 
     const toggleExtraDetails = (code) => {
@@ -365,7 +112,7 @@ const Reservation = () => {
                 if (booking.code === code) {
                     return {
                         ...booking,
-                        showDetails: !booking.showDetails, // Toggle visibility
+                        showDetails: !booking.showDetails,
                     };
                 }
                 return booking;
@@ -373,56 +120,71 @@ const Reservation = () => {
         });
     };
 
-    useEffect(() => {
-        setBookings((prev) => sortBookings(prev));
-    }, []);
+    if (loading) {
+        return (
+            <div className="reservation-system">
+                <div className="loading-spinner">Loading...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="reservation-system">
             <div className="hero fade-in">
                 <h1>Owner Onlooker</h1>
+                {!isConnected && (
+                    <div className="connection-status">
+                        Connecting to real-time updates...
+                    </div>
+                )}
+                {error && <div className="error-message">{error}</div>}
             </div>
+            
             <div className="reservations fade-in">
                 <div className="reservation-box">
                     <h2>Bookings</h2>
-                    <ul>
-                        {bookings.map((booking) => (
-                            <li key={booking.code} className={booking.status.toLowerCase()}>
-                                <div className="reservation-header">
-                                    <span>Code: {booking.code}</span>
-                                    <span>Date: {booking.date}</span>
-                                    <span>Time: {`${booking.time} (Duration: ${booking.duration} hr)`}</span>
-                                    <span className={`status ${booking.status.toLowerCase()}`}>
-                                        {booking.status}
-                                    </span>
-                                    {!booking.terminated && (
+                    {bookings.length === 0 ? (
+                        <div className="no-bookings">No reservations found</div>
+                    ) : (
+                        <ul>
+                            {bookings.map((booking) => (
+                                <li key={booking.code} className={booking.status.toLowerCase()}>
+                                    <div className="reservation-header">
+                                        <span>Code: {booking.code}</span>
+                                        <span>Date: {booking.date}</span>
+                                        <span>Time: {`${booking.time} (Duration: ${booking.duration} hr)`}</span>
+                                        <span className={`status ${booking.status.toLowerCase()}`}>
+                                            {booking.status}
+                                        </span>
+                                        {!booking.terminated && (
+                                            <button
+                                                className="terminate-btn"
+                                                onClick={() => handleTerminate(booking.code)}
+                                            >
+                                                Mark as Serviced
+                                            </button>
+                                        )}
                                         <button
-                                            className="terminate-btn"
-                                            onClick={() => handleTerminate(booking.code)}
+                                            className="details-toggle-btn"
+                                            onClick={() => toggleExtraDetails(booking.code)}
                                         >
-                                            slide down
+                                            {booking.showDetails ? '▲' : '▼'}
                                         </button>
-                                    )}
-                                    <button
-                                        className="details-toggle-btn"
-                                        onClick={() => toggleExtraDetails(booking.code)}
-                                    >
-                                        {booking.showDetails ? '▲' : '▼'}
-                                    </button>
-                                </div>
-
-                                {booking.showDetails && (
-                                    <div className="extra-details">
-                                        <p>Customer Name: {booking.customerName}</p>
-                                        <p>Reservation for: {booking.people} people</p>
-                                        <p>Table for 2: {booking.tableFor2}</p>
-                                        <p>Table for 4: {booking.tableFor4}</p>
-                                        <p>Table for 6: {booking.tableFor6}</p>
                                     </div>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
+
+                                    {booking.showDetails && (
+                                        <div className="extra-details">
+                                            <p>Customer Name: {booking.customerName}</p>
+                                            <p>Reservation for: {booking.people} people</p>
+                                            <p>Table for 2: {booking.tableFor2}</p>
+                                            <p>Table for 4: {booking.tableFor4}</p>
+                                            <p>Table for 6: {booking.tableFor6}</p>
+                                        </div>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             </div>
         </div>

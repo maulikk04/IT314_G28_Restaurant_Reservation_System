@@ -11,7 +11,8 @@ const reservationSchema = new mongoose.Schema({
     sixPerson: { type: Number, default: 0 }
   },
   entryCode: { type: String, required: true, unique: true },
-  status: { type: String, enum: ['confirmed', 'cancelled'] }
+  status: { type: String, enum: ['confirmed', 'cancelled'] },
+  viewed: { type: Boolean, default: false }
 });
 
 const reservation = new mongoose.model('reservation', reservationSchema);

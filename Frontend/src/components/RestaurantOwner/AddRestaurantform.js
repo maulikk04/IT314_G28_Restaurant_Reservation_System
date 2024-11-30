@@ -325,7 +325,7 @@ function AddRestaurantform({ restaurantData, onSave, onClose }) {
             </div>
             <div>
               <label>Ambience (Upload Images):</label>
-              <input type="file" name="images" multiple onChange={handleFileChange} ref={imageInputRef} accpet="image/*" />
+              <input type="file" name="images" multiple onChange={handleFileChange} ref={imageInputRef} accept="image/*" />
               {imagePreviews.length > 0 && (
                 <button type="button" style={{ marginTop: '5px' }} onClick={() => setShowImagePreview(true)}>
                   Preview Ambience Images

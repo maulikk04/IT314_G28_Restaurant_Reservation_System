@@ -298,31 +298,53 @@ const restaurantData = [
     ownerId: "673c3c32d559e4780273e2f7",
     image: `${process.env.REACT_APP_API_URL}/restaurant/images/72aa4055900f4b11ed7a67114b4f03cf.png`,
     photos: [
-      `${process.env.REACT_APP_API_URL}/restaurant/images/72aa4055900f4b11ed7a67114b4f03cf.png`, 
-      `${process.env.REACT_APP_API_URL}/restaurant/images/cebe7ca4607eeb98f7792b4cf9e66e74.png`, 
+      `${process.env.REACT_APP_API_URL}/restaurant/images/72aa4055900f4b11ed7a67114b4f03cf.png`,
+      `${process.env.REACT_APP_API_URL}/restaurant/images/cebe7ca4607eeb98f7792b4cf9e66e74.png`,
       `${process.env.REACT_APP_API_URL}/restaurant/images/b963052ec33a0e812afca4aceb89420a.png`
     ],
     menus: [
-      `${process.env.REACT_APP_API_URL}/restaurant/images/fc53412ee31077daa7f40bf48941bd59.png`, 
-      `${process.env.REACT_APP_API_URL}/restaurant/images/9ad546d1a9990d564555690054b640e0.png`, 
+      `${process.env.REACT_APP_API_URL}/restaurant/images/fc53412ee31077daa7f40bf48941bd59.png`,
+      `${process.env.REACT_APP_API_URL}/restaurant/images/9ad546d1a9990d564555690054b640e0.png`,
       `${process.env.REACT_APP_API_URL}/restaurant/images/8b8b9c530cde4621a65894cfc6f14d48.png`
     ],
     name: "Master",
     location: "Surat",
-    capacity:{
-      2:1,
-      4:1,
-      6:1
+    capacity: {
+      2: 1,
+      4: 1,
+      6: 1
     },
     cuisine: "Indian, Thai, Chinese, Italian, Mexican",
     openingTime: "06:00",
     closingTime: "23:00",
     phoneNumber: "1234567890",
-    foodPreference: "Vegetarian", 
+    foodPreference: "Vegetarian",
     specialDishes: "Nothing",
     features: "Very Good",
     booking: true,
   },
+  {
+    id: "673c329c3aa6219cd96a3b2e",
+    ownerId: "673c2dcb92adafcb666c9365",
+    image: `${process.env.REACT_APP_API_URL}/restaurant/images/4783f44003f157f4cb49f0a37db76303.jpg`,
+    photos: [`${process.env.REACT_APP_API_URL}/restaurant/images/4783f44003f157f4cb49f0a37db76303.jpg`,
+    `${process.env.REACT_APP_API_URL}/restaurant/images/8143e1ea01200632d461d4b972f82cb9.jpg`,
+    `${process.env.REACT_APP_API_URL}/restaurant/images/e79112a5c85b355431c30971341ad5ea.jpg`],
+    menus: [`${process.env.REACT_APP_API_URL}/restaurant/images/94ef0b333a9d22e9d2a33a3ddf551ee2.png`,
+    `${process.env.REACT_APP_API_URL}/restaurant/images/e1f36fa2381e26c1faf1d2569d11d2a3.png`,
+    `${process.env.REACT_APP_API_URL}/restaurant/images/7df9e084dba24bd78268d4f55ffac2b7.png`],
+    name: "Green Spice",
+    location: "Pal, Surat",
+    capacity: { 2: 3, 4: 2, 6: 1 },
+    cuisines: "Italian,Mexican,Thai",
+    openingTime: "11:01",
+    closingTime: "22:02",
+    phoneNumber: "1234567890",
+    foodPreference: "Non-Vegetarian",
+    specialDishes: "Pasta, Pizza",
+    features: "ekece",
+    booking: true,
+  }
 ];
 
 export default restaurantData;
