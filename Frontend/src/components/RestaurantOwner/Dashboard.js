@@ -140,7 +140,11 @@ const Dashboard = () => {
   const filteredRestaurants = restaurants.filter((restaurant) =>
     restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
     (filterCuisine === '' || 
-     (restaurant.cuisines && restaurant.cuisines.toLowerCase().includes(filterCuisine.toLowerCase())))
+     (restaurant.cuisines && 
+      restaurant.cuisines.toLowerCase().split(',').some(cuisine => 
+        cuisine.trim().toLowerCase().includes(filterCuisine.toLowerCase())
+      ))
+    )
   );
   
   const handleAddRestaurantClose = () => {
