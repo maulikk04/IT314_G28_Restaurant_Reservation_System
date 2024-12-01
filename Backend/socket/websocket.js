@@ -1,5 +1,7 @@
 const WebSocket = require('ws');
+
 const Reservation = require('../model/reservationmodel');
+
 
 let wss;
 
@@ -27,6 +29,7 @@ const initializeWebSocket = (server) => {
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
+
       }
     });
   });
