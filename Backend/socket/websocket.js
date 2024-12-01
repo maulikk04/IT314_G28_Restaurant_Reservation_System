@@ -1,15 +1,32 @@
 const WebSocket = require('ws');
+const Reservation = require('../model/reservationmodel');
 
 let wss;
 
 const initializeWebSocket = (server) => {
   wss = new WebSocket.Server({ server , path: '/ws'});
 
-  wss.on('connection', (ws) => {
-    ws.on('message', (message) => {
-      const data = JSON.parse(message);
-      if (data.type === 'subscribe' && data.restaurantId) {
-        ws.restaurantId = data.restaurantId;
+  wss.on('connection', async (ws) => {
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message);
+        if (data.type === 'subscribe' && data.restaurantId) {
+          ws.restaurantId = data.restaurantId;
+          
+          const hasUnviewedReservations = await Reservation.exists({
+            restaurantId: data.restaurantId,
+            viewed: false
+          });
+
+          if (hasUnviewedReservations) {
+            ws.send(JSON.stringify({
+              type: 'newReservation',
+              restaurantId: data.restaurantId
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
       }
     });
   });
