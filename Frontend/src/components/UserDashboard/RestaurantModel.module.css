@@ -22,6 +22,8 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     position: relative;
     text-align: center;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 /* Close Button */
@@ -31,74 +33,129 @@
     right: 15px;
     background: none;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     cursor: pointer;
+    color: #333;
+    z-index: 2;
+    transition: color 0.2s ease;
+}
+
+.closeButton:hover {
+    color: #ff3e2e;
 }
 
 /* Main Image Section */
 .imageContainer {
     width: 100%;
-    height: 200px;
+    height: 250px;
     overflow: hidden;
+    position: relative;
 }
 
 .mainImage {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.mainImage:hover {
+    transform: scale(1.05);
 }
 
 /* Content Section */
 .content {
-    padding: 20px;
+    padding: 25px;
 }
 
 .name {
-    font-size: 1.8rem;
+    font-size: 2rem;
     color: #333;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    font-weight: bold;
 }
 
 .rating,
 .menus,
 .specialDishes,
 .specialties,
-.location {
-    font-size: 1rem;
-    margin-bottom: 10px;
-    color: #555;
+.location,
+.features,
+.contact {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: #444;
     text-align: left;
+    line-height: 1.4;
 }
 
 .photos {
     display: flex;
-    gap: 10px;
-    margin-top: 15px;
+    gap: 12px;
+    margin-top: 20px;
     justify-content: center;
     flex-wrap: wrap;
+    padding: 10px 0;
 }
 
 .photo {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     object-fit: cover;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.photo:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Book Button */
 .bookButton {
-    padding: 10px 20px;
+    padding: 12px 30px;
     background-color: #ff6f61;
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 1rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
-    margin-top: 15px;
-    transition: background-color 0.3s ease;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 111, 97, 0.3);
 }
 
 .bookButton:hover {
     background-color: #ff3e2e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 62, 46, 0.4);
+}
+
+.bookButton:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Navigation Buttons for Fullscreen Images */
+.navButton {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.navButton:hover {
+    background: rgba(255, 255, 255, 0.9);
 }

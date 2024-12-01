@@ -1,24 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Navbar1.module.css";
-
-// Centralized location list
-const locations = [
-  "All Locations",
-  "Mumbai",
-  "Beijing",
-  "Tokyo",
-  "Mexico City",
-  "Florence",
-  "Shanghai",
-  "Jaipur",
-];
+import fetchRestaurants from "./restaurantData";
 
 const Navbar1 = ({ filterByLocation }) => {
   const navigate = useNavigate();
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("All Locations");
+  const [locations] = useState(["All Locations", "Ahmedabad", "Surat", "Mumbai", "Delhi", "Bangalore", "Kolkata", "Gandhinagar"]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [restaurants, setRestaurants] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+
+  useEffect(() => {
+    const getLocations = async () => {
+      const restaurantsData = await fetchRestaurants();
+      setRestaurants(restaurantsData);
+    };
+    getLocations();
+  }, []);
 
   const handleLocationChange = (location) => {
     setSelectedLocation(location);
@@ -26,14 +28,69 @@ const Navbar1 = ({ filterByLocation }) => {
     setShowLocationDropdown(false);
   };
 
+  const handleSearch = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    
+    if (term.length > 0) {
+      const filteredSuggestions = restaurants.filter(restaurant => {
+        const searchFields = [
+          restaurant.name,
+          restaurant.location,
+          restaurant.cuisines,
+          restaurant.features || '',
+          restaurant.foodPreference || ''
+        ].join(" ").toLowerCase();
+        return searchFields.includes(term.toLowerCase());
+      });
+      setSuggestions(filteredSuggestions);
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSearchSubmit = (searchItem = null) => {
+    setShowSuggestions(false);
+    const searchQuery = searchItem || searchTerm;
+    
+    if (searchQuery.trim()) {
+      navigate("/user-dashboard/search-results", { 
+        state: { 
+          searchQuery: searchQuery.trim(),
+          suggestions: suggestions 
+        } 
+      });
+      setSearchTerm('');
+    }
+  };
+
+  const handleSuggestionClick = (item) => {
+    handleSearchSubmit(item.name);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearchSubmit();
+    }
+  };
+
+  const handleHomeClick = () => {
+    setSelectedLocation("All Locations");
+    filterByLocation(null);
+    setSearchTerm("");
+    setSuggestions([]);
+    setShowSuggestions(false);
+    navigate("/user-dashboard");
+  };
+
   return (
     <div className={styles.navbar}>
-      {/* Home Button */}
-      <button className={styles.brand} onClick={() => navigate("/user-dashboard")}>
+      <button className={styles.brand} onClick={handleHomeClick}>
         Fork & Feast
       </button>
 
-      {/* Location Dropdown */}
       <div
         className={styles.locationDropdown}
         onClick={() => setShowLocationDropdown(!showLocationDropdown)}
@@ -54,17 +111,53 @@ const Navbar1 = ({ filterByLocation }) => {
         )}
       </div>
 
-      {/* Search Bar */}
-      <input
-        type="text"
-        placeholder="Search by cuisine, food, location, etc."
-        className={styles.searchBar}
-      />
+      <div className={styles.searchContainer}>
+        <div className={styles.searchInputWrapper}>
+          <input
+            type="text"
+            placeholder="Search for Restaurants, Preferences, Features etc."
+            className={styles.searchBar}
+            value={searchTerm}
+            onChange={handleSearch}
+            onKeyPress={handleKeyPress}
+          />
+          <button 
+            className={styles.searchButton}
+            onClick={() => handleSearchSubmit()}
+          >
+            Search
+          </button>
+        </div>
+        {showSuggestions && suggestions.length > 0 && (
+          <>
+            <div 
+              className={`${styles.searchBackdrop} ${showSuggestions ? styles.active : ''}`}
+              onClick={() => setShowSuggestions(false)}
+            />
+            <div className={styles.suggestions}>
+              {suggestions.map((item, index) => (
+                <div
+                  key={index}
+                  className={styles.suggestionItem}
+                  onClick={() => handleSuggestionClick(item)}
+                >
+                  <span className={styles.suggestionName}>{item.name}</span>
+                  <span className={styles.suggestionDetails}>
+                    {item.cuisines} • {item.location}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
-      {/* About Us, Become a Member, and Profile */}
       <div className={styles.rightSection}>
-        <button className={styles.optionButton} onClick={() => navigate("/user-dashboard/about-us")}>
-          About Us
+        <button 
+          className={styles.optionButton} 
+          onClick={() => navigate("/user-dashboard/about-us")}
+        >
+          Contact Us
         </button>
         <button
           className={styles.optionButton}
