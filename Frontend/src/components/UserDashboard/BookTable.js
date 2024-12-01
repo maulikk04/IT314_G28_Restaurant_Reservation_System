@@ -1,47 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams , useNavigate } from "react-router-dom";
+import { useParams , useNavigate, useLocation } from "react-router-dom";
 import fetchRestaurants from "./restaurantData";
 import styles from "./BookTable.module.css";
 
 const BookTable = () => {
   const { restaurantId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(null);
+  const isEditing = location.state?.isEditing || false;
+  const reservationId = location.state?.reservationData?._id;
 
-  useEffect(() => {
-    const getRestaurantData = async () => {
-      try {
-        const restaurantData = await fetchRestaurants();
-        // Convert restaurantData to array if it's an object
-        const restaurantArray = restaurantData ? 
-          (Array.isArray(restaurantData) ? restaurantData : [restaurantData]) : 
-          [];
-        
-        const foundRestaurant = restaurantArray.find(
-          (rest) => rest.id === restaurantId
-        );
-        setRestaurant(foundRestaurant);
-      } catch (error) {
-        console.error('Error fetching restaurant data:', error);
-      }
-    };
-
-    getRestaurantData();
-  }, [restaurantId]);
-
-  const [activeSection, setActiveSection] = useState("Offers");
-  const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [photoIndex, setPhotoIndex] = useState(0);
-  const [currentPhotoSet, setCurrentPhotoSet] = useState([]);
-
-  // Booking State
+  // State declarations - remove duplicates
   const [bookingDetails, setBookingDetails] = useState({
-    date: "",
-    time: "",
-    tables: { 2: 0, 4: 0, 6: 0 },
+    date: location.state?.reservationData?.date || "",
+    time: location.state?.reservationData?.time || "",
+    tables: {
+      2: location.state?.reservationData?.tables?.twoPerson || 0,
+      4: location.state?.reservationData?.tables?.fourPerson || 0,
+      6: location.state?.reservationData?.tables?.sixPerson || 0
+    }
   });
 
-  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedTime, setSelectedTime] = useState(location.state?.reservationData?.time || "");
   const [availableTables, setAvailableTables] = useState(null);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [timeSlots, setTimeSlots] = useState({
@@ -53,6 +34,10 @@ const BookTable = () => {
   // Modal State
   const [showDateModal, setShowDateModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [currentPhotoSet, setCurrentPhotoSet] = useState([]);
+  const [activeSection, setActiveSection] = useState("Offers");
 
   // Refs for each section
   const offersRef = useRef(null);
@@ -64,6 +49,62 @@ const BookTable = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    const fetchRestaurantData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        console.log(`Fetching restaurant with ID: ${restaurantId}`);
+        
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/restaurant/${restaurantId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch restaurant data');
+        }
+
+        const data = await response.json();
+        console.log('Raw restaurant data:', data.restaurantData);
+        
+        if (data.restaurantData) {
+          setRestaurant({
+            id: data.restaurantData._id,
+            name: data.restaurantData.name || '',
+            location: data.restaurantData.location || '',
+            image: Array.isArray(data.restaurantData.image) ? 
+              data.restaurantData.image.map(img => `${process.env.REACT_APP_API_URL}/restaurant/images/${img}`) : [],
+            cuisines: data.restaurantData.cuisines || '',
+            openingTime: data.restaurantData.openingTime || '',
+            closingTime: data.restaurantData.closingTime || '',
+            features: data.restaurantData.features || '',
+            specialDishes: data.restaurantData.specialDishes || '',
+            menuImage: Array.isArray(data.restaurantData.menuImage) ? 
+              data.restaurantData.menuImage.map(img => `${process.env.REACT_APP_API_URL}/restaurant/images/${img}`) : [],
+            capacity: data.restaurantData.capacity || {
+              twoPerson: 0,
+              fourPerson: 0,
+              sixPerson: 0
+            }
+          });
+
+          console.log('Processed restaurant images:', Array.isArray(data.restaurantData.image) ? 
+            data.restaurantData.image.map(img => `${process.env.REACT_APP_API_URL}/restaurant/images/${img}`) : []);
+        }
+      } catch (error) {
+        console.error('Error fetching restaurant data:', error);
+        alert('Failed to load restaurant details. Please try again later.');
+      }
+    };
+
+    if (restaurantId) {
+      fetchRestaurantData();
+    }
+  }, [restaurantId]);
 
   // Photo navigation handlers
   const handlePhotoClick = (photo, index, photoSet) => {
@@ -120,16 +161,9 @@ const BookTable = () => {
 
   // Check Time Availability
   const checkAvailability = async () => {
+    if (!restaurant) return;
+
     const token = localStorage.getItem('token');
-    const selectedDateTime = new Date(`${bookingDetails.date} ${selectedTime}`);
-    const openTime = new Date(`${bookingDetails.date} ${restaurant.openingTime}`);
-    const closeTime = new Date(`${bookingDetails.date} ${restaurant.closingTime}`);
-
-    if (selectedDateTime < openTime || selectedDateTime > closeTime) {
-      alert(`Restaurant is only open between ${restaurant.openingTime} and ${restaurant.closingTime}`);
-      return;
-    }
-
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/reservation/checkAvailability`, {
         method: 'POST',
@@ -140,46 +174,51 @@ const BookTable = () => {
         body: JSON.stringify({
           restaurantId: restaurantId,
           date: bookingDetails.date,
-          time: selectedTime
+          time: selectedTime,
+          currentReservationId: isEditing ? reservationId : null
         })
       });
-  
-      if(response.status === 401)
-      {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
+
       const data = await response.json();
-      console.log(data);
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      console.log('Raw availability data:', data);
 
-      
+      const calculateActualAvailability = (slotTables, maxCapacity) => {
+        let tables = { ...slotTables };
+        
+        if (isEditing && location.state?.reservationData?.tables) {
+          const currentTables = location.state.reservationData.tables;
+          tables = {
+            2: Math.min(maxCapacity.twoPerson, (tables[2] || 0)),
+            4: Math.min(maxCapacity.fourPerson, (tables[4] || 0)),
+            6: Math.min(maxCapacity.sixPerson, (tables[6] || 0))
+          };
+        }
+        
+        return tables;
+      };
 
-      // Format the time slots based on API response
       setTimeSlots({
         before: {
-          time: data.availability.beforeSlot.time,
-          tables: data.availability.beforeSlot.tables,
-          closed: !isRestaurantOpen(new Date(`${bookingDetails.date} ${data.availability.beforeSlot.time}`))
+          time: data.beforeSlot.time,
+          tables: calculateActualAvailability(data.beforeSlot.tables, restaurant.capacity),
+          closed: false
         },
         current: {
           time: selectedTime,
-          tables: data.availability.currentSlot.tables,
+          tables: calculateActualAvailability(data.currentSlot.tables, restaurant.capacity),
           closed: false
         },
         after: {
-          time: data.availability.afterSlot.time,
-          tables: data.availability.afterSlot.tables,
-          closed: !isRestaurantOpen(new Date(`${bookingDetails.date} ${data.availability.afterSlot.time}`))
+          time: data.afterSlot.time,
+          tables: calculateActualAvailability(data.afterSlot.tables, restaurant.capacity),
+          closed: false
         }
       });
 
       setShowAvailabilityModal(true);
     } catch (error) {
       console.error('Error checking availability:', error);
-      alert(error)
+      alert(`Failed to check availability: ${error.message}`);
     }
   };
 
@@ -247,49 +286,55 @@ const BookTable = () => {
   // Handle booking
   const handleBooking = async () => {
     try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/login');
-            return;
-        }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
 
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/reservation/createReservation`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                restaurantId,
-                date: bookingDetails.date,
-                time: bookingDetails.time,
-                tables: {
-                    twoPerson: bookingDetails.tables[2],
-                    fourPerson: bookingDetails.tables[4],
-                    sixPerson: bookingDetails.tables[6]
-                }
-            })
-        });
+      const endpoint = isEditing 
+        ? `${process.env.REACT_APP_API_URL}/reservation/updateReservation/${reservationId}`
+        : `${process.env.REACT_APP_API_URL}/reservation/createReservation`;
 
-        const data = await response.json();
+      const method = isEditing ? 'PUT' : 'POST';
 
-        if (response.status === 401) {
-            localStorage.removeItem('token');
-            navigate('/login');
-            return;
-        }
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          restaurantId,
+          date: bookingDetails.date,
+          time: bookingDetails.time,
+          tables: {
+            twoPerson: bookingDetails.tables[2],
+            fourPerson: bookingDetails.tables[4],
+            sixPerson: bookingDetails.tables[6]
+          }
+        })
+      });
 
-        if (!response.ok) {
-            throw new Error(data.message);
-        }
+      const data = await response.json();
 
-        alert(`Reservation successful! Your entry code is: ${data.reservation.entryCode}`);
-        navigate('/user-dashboard');
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login');
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      alert(isEditing ? 'Reservation updated successfully!' : `Reservation successful! Your entry code is: ${data.reservation.entryCode}`);
+      navigate('/user-dashboard/bookings');
     } catch (error) {
-        console.error('Error creating reservation:', error);
-        alert(error.message);
+      console.error(isEditing ? 'Error updating reservation:' : 'Error creating reservation:', error);
+      alert(error.message);
     }
-};
+  };
 
 
   if (!restaurant) {
@@ -329,9 +374,10 @@ const BookTable = () => {
           <p>No menu photos available.</p>
         );
       case "Photos":
-        return restaurant.Image?.length ? (
+        {console.log(restaurant)}
+        return restaurant.image?.length ? (
           <div className={styles.photoGrid}>
-            {restaurant.Image.map((photo, index) => (
+            {restaurant.image.map((photo, index) => (
               <div key={index} className={styles.photoCard}>
                 <img
                   src={photo}
@@ -369,97 +415,100 @@ const BookTable = () => {
 
   return (
     <div className={styles.container}>
-      {/* Banner and Booking Section */}
-      <div className={styles.bannerSection}>
-        <div className={styles.banner}>
-          <img
-            src={restaurant.image}
-            alt={restaurant.name}
-            className={styles.image}
-          />
-          <div className={styles.info}>
-            <h1 className={styles.name}>{restaurant.name}</h1>
-            <p className={styles.address}>{restaurant.address}</p>
-            <p className={styles.cuisine}>
-              <strong>Cuisine:</strong> {restaurant.cuisines}
-            </p>
-            <p className={styles.rating}>
-              <strong>Rating:</strong> {restaurant.rating} ⭐
-            </p>
-            <p className={styles.expense}>
-              <strong>Approximate Expense:</strong> ₹500 per table of 2.
-            </p>
-          </div>
-        </div>
-
-        {/* Booking Section */}
-        <div className={styles.bookingSection}>
-          <h2>Book Your Table</h2>
-          <form className={styles.form}>
-            <div className={styles.formGroup}>
-              <button
-                type="button"
-                onClick={() => setShowDateModal(true)}
-                className={styles.dateButton}
-              >
-                Select Date: {bookingDetails.date || "Choose a date"}
-              </button>
-            </div>
-
-            <div className={styles.formGroup}>
-              <h3>Select Time:</h3>
-              <div className={styles.timeSelection}>
-                <input
-                  type="time"
-                  value={selectedTime}
-                  onChange={handleTimeChange}
-                  className={styles.timeInput}
-                  min={restaurant.openingTime}
-                  max={restaurant.closingTime}
+      {restaurant && (
+        <div className={styles.bannerSection}>
+          <div className={styles.banner}>
+            {restaurant.image && restaurant.image.length > 0 && (
+              <div className={styles.imageContainer}>
+                <img
+                  src={restaurant.image[0]}
+                  alt={restaurant.name}
+                  className={styles.bannerImage}
+                  onError={(e) => {
+                    console.error('Failed to load image:', e.target.src);
+                    e.target.onerror = null; // Prevent infinite loop
+                    e.target.style.display = 'none';
+                  }}
                 />
+              </div>
+            )}
+            <div className={styles.info}>
+              <h1>{restaurant.name}</h1>
+              <p>{restaurant.location}</p>
+              <p>Cuisines: {restaurant.cuisines}</p>
+              <p>Opening Hours: {restaurant.openingTime} - {restaurant.closingTime}</p>
+            </div>
+          </div>
+
+          {/* Booking Section */}
+          <div className={styles.bookingSection}>
+            <h2>Book Your Table</h2>
+            <form className={styles.form}>
+              <div className={styles.formGroup}>
                 <button
                   type="button"
-                  onClick={checkAvailability}
-                  className={styles.checkButton}
-                  disabled={!bookingDetails.date || !selectedTime}
+                  onClick={() => setShowDateModal(true)}
+                  className={styles.dateButton}
                 >
-                  Check Availability
+                  Select Date: {bookingDetails.date || "Choose a date"}
                 </button>
               </div>
-            </div>
 
-            {availableTables && (
               <div className={styles.formGroup}>
-                <h3>Available Tables:</h3>
-                {[2, 4, 6].map((size) => (
-                  <div key={size} className={styles.tableType}>
-                    <label>Table for {size} ({availableTables[size]} available):</label>
-                    <div className={styles.quantityControls}>
-                      <button type="button" onClick={() => decrementTable(size)}>
-                        -
-                      </button>
-                      <span>{bookingDetails.tables[size]}</span>
-                      <button type="button" onClick={() => incrementTable(size)}>
-                        +
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                <h3>Select Time:</h3>
+                <div className={styles.timeSelection}>
+                  <input
+                    type="time"
+                    value={selectedTime}
+                    onChange={handleTimeChange}
+                    className={styles.timeInput}
+                    min={restaurant.openingTime}
+                    max={restaurant.closingTime}
+                  />
+                  <button
+                    type="button"
+                    onClick={checkAvailability}
+                    className={styles.checkButton}
+                    disabled={!bookingDetails.date || !selectedTime}
+                  >
+                    Check Availability
+                  </button>
+                </div>
               </div>
-            )}
 
-            {getTotalTables() > 0 && (
-              <button
-                type="button"
-                className={styles.bookButton}
-                onClick={handleBooking}
-              >
-                Booking {getTotalTables()} table(s) for {getTotalPeople()} people
-              </button>
-            )}
-          </form>
+              {availableTables && (
+                <div className={styles.formGroup}>
+                  <h3>Available Tables:</h3>
+                  {[2, 4, 6].map((size) => (
+                    <div key={size} className={styles.tableType}>
+                      <label>Table for {size} ({availableTables[size]} available):</label>
+                      <div className={styles.quantityControls}>
+                        <button type="button" onClick={() => decrementTable(size)}>
+                          -
+                        </button>
+                        <span>{bookingDetails.tables[size]}</span>
+                        <button type="button" onClick={() => incrementTable(size)}>
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {getTotalTables() > 0 && (
+                <button
+                  type="button"
+                  className={styles.bookButton}
+                  onClick={handleBooking}
+                >
+                  {isEditing ? 'Update Reservation' : `Book ${getTotalTables()} table(s) for ${getTotalPeople()} people`}
+                </button>
+              )}
+            </form>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Menu Bar */}
       <div className={styles.menuBar}>

@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const fetchRestaurants = async () => {
     try {
+        console.log(process.env.REACT_APP_API_URL);
+        
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/public/restaurants/all`);
         if (response.data?.success && Array.isArray(response.data.restaurantData)) {
             return response.data.restaurantData.map(restaurant => ({

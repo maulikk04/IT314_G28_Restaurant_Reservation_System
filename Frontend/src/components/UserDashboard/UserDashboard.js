@@ -38,6 +38,7 @@ const UserDashboard = () => {
           <Route path="become-a-member" element={<BecomeMember />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="book-table/:restaurantId" element={<BookTable />} />
+          <Route path="edit-booking/:restaurantId/:reservationId" element={<BookTable />} />
           <Route path="search-results" element={<SearchResults />} />
         </Routes>
       </div>

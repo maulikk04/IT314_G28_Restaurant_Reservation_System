@@ -186,4 +186,40 @@ const BookingConfirmTemplate = `
 </html>
 `;
 
-module.exports = { EmailVerificationTemplate, ResetPasswordTemplate, BookingConfirmTemplate };
+const BookingUpdateTemplate = `
+<html>
+  <!-- Similar structure to BookingConfirmTemplate -->
+  <div class="content">
+    <h2>Your Reservation Has Been Updated</h2>
+    <p>Your booking at {Restaurant Name} has been successfully updated. Here are your new reservation details:</p>
+    <div class="details">
+      <p><strong>Date:</strong> {Date}</p>
+      <p><strong>Time:</strong> {Time}</p>
+      <p><strong>Number of Tables:</strong></p>
+      <ul>
+        <li>Table for 2: {Count1}</li>
+        <li>Table for 4: {Count2}</li>
+        <li>Table for 6: {Count3}</li>
+      </ul>
+      <p><strong>Booking Code:</strong> {Booking Code}</p>
+    </div>
+  </div>
+</html>
+`;
+
+const BookingCancellationTemplate = `
+<html>
+  <!-- Similar structure -->
+  <div class="content">
+    <h2>Your Reservation Has Been Cancelled</h2>
+    <p>Your booking at {Restaurant Name} for the following details has been cancelled:</p>
+    <div class="details">
+      <p><strong>Date:</strong> {Date}</p>
+      <p><strong>Time:</strong> {Time}</p>
+      <p><strong>Booking Code:</strong> {Booking Code}</p>
+    </div>
+  </div>
+</html>
+`;
+
+module.exports = { EmailVerificationTemplate, ResetPasswordTemplate, BookingConfirmTemplate, BookingUpdateTemplate, BookingCancellationTemplate };

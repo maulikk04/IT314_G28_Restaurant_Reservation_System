@@ -143,3 +143,14 @@
     }
   }
   
+  .cancelledBooking {
+    opacity: 0.7;
+    background-color: #f8f8f8;
+  }
+  
+  .cancelledStatus {
+    color: #ff0000;
+    font-weight: bold;
+    margin-top: 8px;
+  }
+  
