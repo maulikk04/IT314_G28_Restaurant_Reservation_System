@@ -85,6 +85,12 @@ const Navbar1 = ({ filterByLocation }) => {
     navigate("/user-dashboard");
   };
 
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
   return (
     <div className={styles.navbar}>
       <button className={styles.brand} onClick={handleHomeClick}>
