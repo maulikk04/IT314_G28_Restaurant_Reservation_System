@@ -12,6 +12,7 @@ const initializeWebSocket = (server) => {
     ws.on('message', async (message) => {
       try {
         const data = JSON.parse(message);
+
         
         switch (data.type) {
           case 'subscribe':
