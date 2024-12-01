@@ -2,8 +2,14 @@ const Reservation = require('../model/reservationmodel');
 const Restuarant = require('../model/restaurantmodel');
 const nodemailer = require('nodemailer');
 const User = require('../model/usermodel.js');
-const { BookingConfirmTemplate } = require('../templates/templates.js');
-
+const { 
+  BookingConfirmTemplate, 
+  BookingUpdateTemplate, 
+  BookingCancellationTemplate 
+} = require('../templates/templates.js');
+const mongoose = require('mongoose');
+const { notifyRestaurantOwner } = require('../socket/websocket.js');
+const WebSocket = require('ws');
 const convertTimeToMinutes = (time) => {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
@@ -29,138 +35,160 @@ const isValidBookingTime = (bookingDate, bookingTime) => {
     const bookingDateTime = new Date(bookingDate);
     const [hours, minutes] = bookingTime.split(':').map(Number);
     bookingDateTime.setHours(hours, minutes, 0, 0);
-    
+
     const diffInMinutes = (bookingDateTime - now) / (1000 * 60);
     return diffInMinutes >= 60;
 };
 
-const checkAvailability = async (restaurantId, date, time) => {
+const checkAvailability = async (restaurantId, date, time, currentReservationId = null) => {
     try {
-      // Get restaurant details
-      const restaurant = await Restuarant.findById(restaurantId);
+        // Get restaurant details
+        const restaurant = await Restuarant.findById(restaurantId);
 
-      if (!restaurant) {
-        throw new Error('Restaurant not found');
-      }
-  
-      // Helper function to get slot time
-      const getSlotTime = (baseTime, hourOffset) => {
-        const [hours, minutes] = baseTime.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes + (hourOffset * 60);
-        return convertMinutesToTime(totalMinutes);
-      };
-  
-      // Get times for before and after slots
-      const beforeTime = getSlotTime(time, -1);
-      const afterTime = getSlotTime(time, 1);
-  
-      // Check if all times are within business hours
-      const times = [beforeTime, time, afterTime];
-      times.forEach(slotTime => {
-        if (!isWithinBusinessHours(slotTime, restaurant.openingTime, restaurant.closingTime)) {
-          if (slotTime === time) {
-            throw new Error('Selected time is outside business hours');
-          }
+        if (!restaurant) {
+            throw new Error('Restaurant not found');
         }
-      });
-  
-      // Check if booking time is at least 15 mins in the future
-      if (!isValidBookingTime(date, time)) {
-        throw new Error('Reservations must be made at least 60 minutes in advance');
-      }
-  
-      // Get all reservations for the requested date
-      const requestedDate = new Date(date);
-      const startOfDay = new Date(requestedDate.setHours(0, 0, 0, 0));
-      const endOfDay = new Date(requestedDate.setHours(23, 59, 59, 999));
-  
-      const reservations = await Reservation.find({
-        restaurantId,
-        date: { $gte: startOfDay, $lte: endOfDay },
-        status: 'confirmed'
-      });
-  
-      // Function to calculate available tables for a specific time
-      const calculateAvailability = (checkTime) => {
-        const checkMinutes = convertTimeToMinutes(checkTime);
-        const occupiedTables = {
-          twoPerson: 0,
-          fourPerson: 0,
-          sixPerson: 0
-        };
-  
-        reservations.forEach(reservation => {
-          const reservationMinutes = convertTimeToMinutes(reservation.time);
-          if (Math.abs(reservationMinutes - checkMinutes) < 60) {
-            occupiedTables.twoPerson += reservation.tables.twoPerson;
-            occupiedTables.fourPerson += reservation.tables.fourPerson;
-            occupiedTables.sixPerson += reservation.tables.sixPerson;
-          }
-        });
-  
-        return {
-          2: Math.max(0, restaurant.capacity.twoPerson - occupiedTables.twoPerson),
-          4: Math.max(0, restaurant.capacity.fourPerson - occupiedTables.fourPerson),
-          6: Math.max(0, restaurant.capacity.sixPerson - occupiedTables.sixPerson)
-        };
-      };
-  
-      // Calculate availability for all three time slots
-      const availability = {
-        beforeSlot: {
-          time: beforeTime,
-          tables: isWithinBusinessHours(beforeTime, restaurant.openingTime, restaurant.closingTime) && isValidBookingTime(requestedDate,beforeTime)
-            ? calculateAvailability(beforeTime)
-            : { 2: 0, 4: 0, 6: 0 }
-        },
-        currentSlot: {
-          time: time,
-          tables: calculateAvailability(time)
-        },
-        afterSlot: {
-          time: afterTime,
-          tables: isWithinBusinessHours(afterTime, restaurant.openingTime, restaurant.closingTime) && isValidBookingTime(requestedDate,beforeTime)
-            ? calculateAvailability(afterTime)
-            : { 2: 0, 4: 0, 6: 0 }
-        }
-      };
-  
-      return availability;
-    } catch (error) {
-      throw error;
-    }
-  };
 
+        // Helper function to get slot time
+        const getSlotTime = (baseTime, hourOffset) => {
+            const [hours, minutes] = baseTime.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + (hourOffset * 60);
+            return convertMinutesToTime(totalMinutes);
+        };
 
-  const sendBookingEmail = async (email, name, date, time, tables, code) => {
-    try {
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 465,
-            secure: true,
-            auth: {
-                user: process.env.email,
-                pass: process.env.password
+        // Get times for before and after slots
+        const beforeTime = getSlotTime(time, -1);
+        const afterTime = getSlotTime(time, 1);
+
+        // Check if all times are within business hours
+        const times = [beforeTime, time, afterTime];
+        times.forEach(slotTime => {
+            if (!isWithinBusinessHours(slotTime, restaurant.openingTime, restaurant.closingTime)) {
+                if (slotTime === time) {
+                    throw new Error('Selected time is outside business hours');
+                }
             }
         });
-        console.log(process.env.BACKEND_URL);
-        const mailOptions = {
-            from: process.env.email,
-            to: email,
-            subject: 'Booking Confirmation',
-            html: BookingConfirmTemplate.replace("{Restaurant Name}",name).replace("{Restaurant Name}",name).replace("{Date}",date).replace("{Time}",time).replace("{Count1}",tables.twoPerson).replace("{Count2}",tables.fourPerson).replace("{Count3}",tables.sixPerson).replace("{Booking Code}",code)
+
+        // Check if booking time is at least 15 mins in the future
+        if (!isValidBookingTime(date, time)) {
+            throw new Error('Reservations must be made at least 60 minutes in advance');
+        }
+
+        // Get all reservations for the requested date
+        const requestedDate = new Date(date);
+        const startOfDay = new Date(requestedDate.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(requestedDate.setHours(23, 59, 59, 999));
+
+        const reservations = await Reservation.find({
+            restaurantId,
+            date: { $gte: startOfDay, $lte: endOfDay },
+            status: 'confirmed',
+            ...(currentReservationId && { _id: { $ne: currentReservationId } })
+        });
+
+        // Function to calculate available tables for a specific time
+        const calculateAvailability = (checkTime) => {
+            const checkMinutes = convertTimeToMinutes(checkTime);
+            const occupiedTables = {
+                twoPerson: 0,
+                fourPerson: 0,
+                sixPerson: 0
+            };
+
+            reservations.forEach(reservation => {
+                const reservationMinutes = convertTimeToMinutes(reservation.time);
+                if (Math.abs(reservationMinutes - checkMinutes) < 60) {
+                    occupiedTables.twoPerson += reservation.tables.twoPerson;
+                    occupiedTables.fourPerson += reservation.tables.fourPerson;
+                    occupiedTables.sixPerson += reservation.tables.sixPerson;
+                }
+            });
+
+            return {
+                2: Math.max(0, restaurant.capacity.twoPerson - occupiedTables.twoPerson),
+                4: Math.max(0, restaurant.capacity.fourPerson - occupiedTables.fourPerson),
+                6: Math.max(0, restaurant.capacity.sixPerson - occupiedTables.sixPerson)
+            };
         };
-        
-        await transporter.sendMail(mailOptions);
-        console.log(`Confirmation email sent to ${email}`);
+
+        // Calculate availability for all three time slots
+        const availability = {
+            beforeSlot: {
+                time: beforeTime,
+                tables: isWithinBusinessHours(beforeTime, restaurant.openingTime, restaurant.closingTime) && isValidBookingTime(requestedDate, beforeTime)
+                    ? calculateAvailability(beforeTime)
+                    : { 2: 0, 4: 0, 6: 0 }
+            },
+            currentSlot: {
+                time: time,
+                tables: calculateAvailability(time)
+            },
+            afterSlot: {
+                time: afterTime,
+                tables: isWithinBusinessHours(afterTime, restaurant.openingTime, restaurant.closingTime) && isValidBookingTime(requestedDate, beforeTime)
+                    ? calculateAvailability(afterTime)
+                    : { 2: 0, 4: 0, 6: 0 }
+            }
+        };
+
+        return availability;
     } catch (error) {
-        console.log(error);
+        throw error;
     }
 };
+
+
+const sendBookingEmail = async (email, name, date, time, tables, code, template) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.email,
+        pass: process.env.password
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.email,
+      to: email,
+      subject: getEmailSubject(template),
+      html: template
+        .replace(/{Restaurant Name}/g, name)
+        .replace("{Date}", date)
+        .replace("{Time}", time)
+        .replace("{Count1}", tables?.twoPerson || 0)
+        .replace("{Count2}", tables?.fourPerson || 0)
+        .replace("{Count3}", tables?.sixPerson || 0)
+        .replace("{Booking Code}", code)
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${email}`);
+  } catch (error) {
+    console.log('Email sending error:', error);
+  }
+};
+
+const getEmailSubject = (template) => {
+  switch(template) {
+    case BookingConfirmTemplate:
+      return 'Booking Confirmation';
+    case BookingUpdateTemplate:
+      return 'Booking Update Confirmation';
+    case BookingCancellationTemplate:
+      return 'Booking Cancellation Confirmation';
+    default:
+      return 'Booking Information';
+  }
+};
+
 // Function to create reservation
 const createReservation = async (req, res) => {
     try {
-        const {restaurantId, date, time, tables} = req.body;
+        const { restaurantId, date, time, tables } = req.body;
         const userId = req.user._id;
 
         // Check if booking time is at least 60 mins in the future
@@ -169,12 +197,12 @@ const createReservation = async (req, res) => {
         }
 
         const availabilityCheck = await checkAvailability(restaurantId, date, time);
-        
+
         // Verify if requested tables are available
         if (tables.twoPerson > availabilityCheck.currentSlot.tables[2] ||
             tables.fourPerson > availabilityCheck.currentSlot.tables[4] ||
             tables.sixPerson > availabilityCheck.currentSlot.tables[6]) {
-            return res.status(400).json({message: "Requested tables are not available"});
+            return res.status(400).json({ message: "Requested tables are not available" });
         }
 
         // Generate unique entry code
@@ -213,71 +241,66 @@ const createReservation = async (req, res) => {
         });
 
         await reservation.save();
-        const restaurantData = await Restuarant.findOne({_id: reservation.restaurantId});
-        const userData = await User.findOne({_id: userId});
-        await sendBookingEmail(userData.email, restaurantData.name, date, time, tables, entryCode);
-        
-        res.status(200).json({ 
+        notifyRestaurantOwner(restaurantId, 'reservationCreated');
+        const restaurantData = await Restuarant.findOne({ _id: reservation.restaurantId });
+        const userData = await User.findOne({ _id: userId });
+        await sendBookingEmail(userData.email, restaurantData.name, date, time, tables, entryCode, BookingConfirmTemplate);
+
+        res.status(200).json({
             message: "Reservation created successfully",
             reservation,
-            entryCode 
+            entryCode
         });
     } catch (error) {
         console.log(error);
-        res.status(400).json({message: error.message});
+        res.status(400).json({ message: error.message });
     }
 };
-const checkAvailaity_Controller = async(req,res)=>{
+const checkAvailaity_Controller = async (req, res) => {
     try {
-        const {restaurantId, date, time} = req.body;
-        const availability = await checkAvailability(restaurantId,date,time);
-        res.status(200).json({availability});
+        const { restaurantId, date, time, currentReservationId } = req.body;
+        const availability = await checkAvailability(restaurantId, date, time, currentReservationId);
+        res.json(availability);
     } catch (error) {
-        console.log(error);
-        res.status(400).json({message:error.message});
+        res.status(400).json({ message: error.message });
     }
 }
 
 
-const updateReservation = async (req,res) => {
+const updateReservation = async (req, res) => {
     try {
-        const {updates} = req.body;
-        const reservationId = req.params.reservationId;
+        const { reservationId } = req.params;
+        const { date, time, tables } = req.body;
         const userId = req.user._id;
-        const existingReservation = await Reservation.findOne({_id:reservationId});
 
-        if(!existingReservation)
-        {
-            return res.status(400).json({message:"No Reservation Found"});
+        // Find existing reservation
+        const existingReservation = await Reservation.findOne({ _id: reservationId, userId });
+        if (!existingReservation) {
+            return res.status(404).json({ message: "Reservation not found or unauthorized" });
         }
 
-        if(existingReservation.userId.toString() !== userId.toString())
-        {
-            return res.status(401).json({message:"Unauthorized access to reservation"})
-        }
+        // If updating time, check if new time is at least 60 mins in the future
+        if (time || date) {
+            const checkDate = date || existingReservation.date;
+            const checkTime = time || existingReservation.time;
 
-        // If updating time, check if new time is at least 15 mins in the future
-        if (updates.time || updates.date) {
-            const checkDate = updates.date || existingReservation.date;
-            const checkTime = updates.time || existingReservation.time;
-            
             if (!isValidBookingTime(checkDate, checkTime)) {
-                return res.status(400).json({message: "Updated reservation time must be at least 15 minutes in advance"});
+                return res.status(400).json({ message: "Updated reservation time must be at least 60 minutes in advance" });
             }
         }
 
         // If date or time or tables are being updated, check availability
-        if (updates.date || updates.time || updates.tables) {
+        if (date || time || tables) {
             const restaurant = await Restuarant.findById(existingReservation.restaurantId);
-            
+
             // Check if new time is within business hours
-            const checkTime = updates.time || existingReservation.time;
+            const checkTime = time || existingReservation.time;
             if (!isWithinBusinessHours(checkTime, restaurant.openingTime, restaurant.closingTime)) {
-                return res.status(400).json({message:"Updated time is outside business hours"});
+                return res.status(400).json({ message: "Updated time is outside business hours" });
             }
 
             // Check availability excluding current reservation
-            const checkDate = updates.date || existingReservation.date;
+            const checkDate = date || existingReservation.date;
             const startOfDay = new Date(checkDate);
             startOfDay.setHours(0, 0, 0, 0);
             const endOfDay = new Date(checkDate);
@@ -286,7 +309,7 @@ const updateReservation = async (req,res) => {
             // Get all other reservations for the same day
             const overlappingReservations = await Reservation.find({
                 restaurantId: existingReservation.restaurantId,
-                _id: { $ne: reservationId }, 
+                _id: { $ne: reservationId },
                 date: { $gte: startOfDay, $lte: endOfDay },
                 status: 'confirmed'
             });
@@ -308,49 +331,98 @@ const updateReservation = async (req,res) => {
             });
 
             // Check if requested tables are available
-            const requestedTables = updates.tables || existingReservation.tables;
+            const requestedTables = tables || existingReservation.tables;
             if (
                 requestedTables.twoPerson > (restaurant.capacity.twoPerson - occupiedTables.twoPerson) ||
                 requestedTables.fourPerson > (restaurant.capacity.fourPerson - occupiedTables.fourPerson) ||
                 requestedTables.sixPerson > (restaurant.capacity.sixPerson - occupiedTables.sixPerson)
             ) {
-                return res.status(400).json({message:"Requested tables are not available for the updated time"});
+                return res.status(400).json({ message: "Requested tables are not available for the updated time" });
             }
         }
 
-        // If all validations pass, update the reservation
+        // Update the reservation
         const updatedReservation = await Reservation.findByIdAndUpdate(
             reservationId,
             {
-                ...(updates.date && { date: updates.date }),
-                ...(updates.time && { time: updates.time }),
-                ...(updates.tables && { tables: updates.tables })
+                ...(date && { date }),
+                ...(time && { time }),
+                ...(tables && { tables })
             },
             { new: true }
-        );
+        ).populate('restaurantId', 'name');
 
-        res.status(200).json({updatedReservation});
+        // Send email notification
+        try {
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.gmail.com',
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.email,
+                    pass: process.env.password
+                }
+            });
+
+            const mailOptions = {
+                from: process.env.email,
+                to: req.user.email,
+                subject: 'Reservation Update Confirmation',
+                html: BookingConfirmTemplate
+                    .replace(/{Restaurant Name}/g, updatedReservation.restaurantId.name)
+                    .replace("{Date}", new Date(updatedReservation.date).toLocaleDateString())
+                    .replace("{Time}", updatedReservation.time)
+                    .replace("{Count1}", updatedReservation.tables.twoPerson)
+                    .replace("{Count2}", updatedReservation.tables.fourPerson)
+                    .replace("{Count3}", updatedReservation.tables.sixPerson)
+                    .replace("{Booking Code}", updatedReservation.entryCode)
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`Update confirmation email sent to ${req.user.email}`);
+        } catch (emailError) {
+            console.error('Error sending update confirmation email:', emailError);
+            // Continue with the response even if email fails
+        }
+
+        // Send WebSocket notification
+        try {
+            const ws = new WebSocket(process.env.WS_URL);
+            ws.on('open', () => {
+                ws.send(JSON.stringify({
+                    type: 'reservationUpdated',
+                    restaurantId: existingReservation.restaurantId
+                }));
+                ws.close();
+            });
+        } catch (wsError) {
+            console.error('WebSocket notification error:', wsError);
+            // Continue with the response even if WebSocket fails
+        }
+
+        res.status(200).json({ 
+            message: "Reservation updated successfully",
+            reservation: updatedReservation 
+        });
     } catch (error) {
-        console.log(error);
-        res.status(400).json({message:error.message});
+        console.error('Update reservation error:', error);
+        res.status(400).json({ message: error.message });
     }
 };
 
-const deleteReservation = async (req,res ) => {
+const deleteReservation = async (req, res) => {
     try {
-        
+
         const reservationId = req.params.reservationId;
         const userId = req.user._id;
-        const reservation = await Reservation.findOne({_id:reservationId});
+        const reservation = await Reservation.findOne({ _id: reservationId });
 
-        if(!reservation)
-        {
-            return res.status(400).json({message:"No Reservation Found"});
+        if (!reservation) {
+            return res.status(400).json({ message: "No Reservation Found" });
         }
 
-        if(reservation.userId.toString() !== userId.toString())
-        {
-            return res.status(401).json({message:"Unauthorized access to reservation"})
+        if (reservation.userId.toString() !== userId.toString()) {
+            return res.status(401).json({ message: "Unauthorized access to reservation" })
         }
 
         // Check if reservation is in the future
@@ -360,7 +432,7 @@ const deleteReservation = async (req,res ) => {
         );
 
         if (reservationDateTime < new Date()) {
-            return res.status(401).json({message:"Cannot delete past reservations"});
+            return res.status(401).json({ message: "Cannot delete past reservations" });
         }
 
         // Soft delete by updating status to cancelled
@@ -368,13 +440,108 @@ const deleteReservation = async (req,res ) => {
             reservationId,
             { status: 'cancelled' },
             { new: true }
+        ).populate('restaurantId', 'name');
+
+        // Send WebSocket notification
+        notifyRestaurantOwner(reservation.restaurantId, 'reservationCancelled');
+
+        const findUser = await User.findOne({ _id: req.user._id });
+        // Send cancellation email
+        await sendBookingEmail(
+            findUser.email,
+            cancelledReservation.restaurantId.name,
+            cancelledReservation.date,
+            cancelledReservation.time,
+            cancelledReservation.tables,
+            cancelledReservation.entryCode,
+            BookingCancellationTemplate
         );
 
-        res.status(200).json({cancelledReservation});
+        res.status(200).json({ cancelledReservation });
     } catch (error) {
         console.log(error);
-        res.status(400).json({error: error.message})
+        res.status(400).json({ error: error.message });
     }
 };
 
-module.exports = {checkAvailaity_Controller,createReservation,updateReservation,deleteReservation}
+const getRestaurantReservations = async (req, res) => {
+    try {
+        const { restaurantId } = req.params;
+        const currentDate = new Date();
+
+        if (!mongoose.Types.ObjectId.isValid(restaurantId)) {
+            return res.status(400).json({ message: 'Invalid restaurant ID' });
+        }
+
+        // Get all reservations for the restaurant
+        const reservations = await Reservation.find({
+            restaurantId: restaurantId,
+            date: { $gte: currentDate }, // Only get current and future reservations
+        })
+            .populate('userId', 'name email') // Get user details
+            .sort({ date: 1, time: 1 }) // Sort by date and time ascending
+            .lean();
+
+        res.status(200).json({
+            data: reservations
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error fetching reservations" })
+    }
+}
+
+const markReservationsAsViewed = async (req, res) => {
+    try {
+        const { restaurantId } = req.params;
+
+        // Update all unviewed reservations for this restaurant
+        await Reservation.updateMany(
+            {
+                restaurantId: restaurantId,
+                viewed: false
+            },
+            {
+                $set: { viewed: true }
+            }
+        );
+
+        res.status(200).json({
+            message: 'Reservations marked as viewed'
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: 'Error updating reservation status'
+        });
+    }
+}
+
+const getUserReservations = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const reservations = await Reservation.find({ userId })
+      .populate('restaurantId', 'name location');
+    console.log(reservations);
+    res.json({ reservations });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getReservation = async (req, res) => {
+  try {
+    const reservation = await Reservation.findById(req.params.reservationId);
+    if (!reservation) {
+      return res.status(404).json({ message: 'Reservation not found' });
+    }
+    console.log(reservation);
+    res.json(reservation);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { checkAvailaity_Controller, createReservation, updateReservation, deleteReservation,getRestaurantReservations, markReservationsAsViewed, getUserReservations, getReservation }

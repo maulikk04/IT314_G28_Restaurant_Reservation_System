@@ -1,18 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import RC from "./RC";
 import RestaurantModal from "./RestaurantModal";
-import restaurantData from "./restaurantData"; // Import data file
+import fetchRestaurants from "./restaurantData";
 import styles from "./CuisinePage.module.css";
 
 const CuisinePage = () => {
-  const { type } = useParams(); // Get cuisine type from URL
+  const { type } = useParams();
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
 
-  // Filter restaurants based on the cuisine type
-  const filteredRestaurants = restaurantData.filter(
-    (restaurant) => restaurant.cuisine.toLowerCase() === type.toLowerCase()
-  );
+  useEffect(() => {
+    const getRestaurants = async () => {
+      const restaurants = await fetchRestaurants();
+      const filtered = restaurants.filter((restaurant) => {
+        const cuisineList = restaurant.cuisines.split(',').map(c => c.trim().toLowerCase());
+        return cuisineList.includes(type.toLowerCase());
+      });
+      setFilteredRestaurants(filtered);
+    };
+
+    getRestaurants();
+  }, [type]);
 
   if (filteredRestaurants.length === 0) {
     return <p>No restaurants found for "{type}" cuisine.</p>;
@@ -20,20 +29,20 @@ const CuisinePage = () => {
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.heading}>{type} Cuisine</h3>
+      <h3 className={styles.heading}>Restaurants offering {type} Cuisine:</h3>
       <div className={styles.cardsContainer}>
         {filteredRestaurants.map((restaurant) => (
           <RC
             key={restaurant.id}
             restaurant={restaurant}
-            onClick={() => setSelectedRestaurant(restaurant)} // Set selected restaurant
+            onClick={() => setSelectedRestaurant(restaurant)}
           />
         ))}
       </div>
       {selectedRestaurant && (
         <RestaurantModal
-          restaurant={selectedRestaurant} // Pass the selected restaurant
-          onClose={() => setSelectedRestaurant(null)} // Close modal handler
+          restaurant={selectedRestaurant}
+          onClose={() => setSelectedRestaurant(null)}
         />
       )}
     </div>
