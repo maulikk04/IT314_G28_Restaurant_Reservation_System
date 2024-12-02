@@ -1,22 +1,39 @@
 // src/Profile.js
-import React from 'react';
-import './Profile.css'; // Import the CSS file for styling
-//import profileImage from './profilephoto.jpeg'; // Adjust the path as necessary
+import React, { useState } from 'react';
+import styles from './Profile.module.css';
+import { FaUser, FaEnvelope } from 'react-icons/fa';
 
 const Profile = () => {
-    return (
-        <div className="profile-container">
-            <div className="profile-box">
-                <img 
-                    //src={profileImage} // Use the imported image
-                    alt="Profile"
-                    className="profile-photo"
-                />
-                <h2 className="profile-name">John Doe</h2>
-                <p className="profile-email">Email ID: johndoe@example.com</p>
-                <button className="edit-button">Edit Profile</button>
+    const [userData] = useState({
+        name: "John Doe",
+        email: "john.doe@example.com",
+      });
+    return ( 
+            <div className={`${styles.profileContainer}`}>
+              <div className={styles.profileHeader}>
+                <h2> <center> My Profile </center> </h2>
+              </div>
+        
+              <div className={styles.profileSection}>
+                <div className={styles.userInfo}>
+                  <div className={styles.infoItem}>
+                    <FaUser className={styles.icon} />
+                    <div>
+                      <h3>Name</h3>
+                      <p>{userData.name}</p>
+                    </div>
+                  </div>
+        
+                  <div className={styles.infoItem}>
+                    <FaEnvelope className={styles.icon} />
+                    <div>
+                      <h3>Email</h3>
+                      <p>{userData.email}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
     );
 };
 

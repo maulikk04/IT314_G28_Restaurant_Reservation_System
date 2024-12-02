@@ -169,7 +169,7 @@ const BookTable = () => {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': `application/json`
         },
         body: JSON.stringify({
           restaurantId: restaurantId,
@@ -201,17 +201,17 @@ const BookTable = () => {
         before: {
           time: data.beforeSlot.time,
           tables: calculateActualAvailability(data.beforeSlot.tables, restaurant.capacity),
-          closed: false
+          closed: !isRestaurantOpen(new Date(`${bookingDetails.date} ${data.beforeSlot.time}`))
         },
         current: {
           time: selectedTime,
           tables: calculateActualAvailability(data.currentSlot.tables, restaurant.capacity),
-          closed: false
+          closed: !isRestaurantOpen(new Date(`${bookingDetails.date} ${selectedTime}`))
         },
         after: {
           time: data.afterSlot.time,
           tables: calculateActualAvailability(data.afterSlot.tables, restaurant.capacity),
-          closed: false
+          closed: !isRestaurantOpen(new Date(`${bookingDetails.date} ${data.afterSlot.time}`))
         }
       });
 
@@ -568,7 +568,7 @@ const BookTable = () => {
               <div className={styles.timeSlotGroup}>
                 <h4>{timeSlots.before.time}</h4>
                 {timeSlots.before.closed ? (
-                  <p>Restaurant is closed at this time</p>
+                  <p>Restaurant will be closed at this time</p>
                 ) : (
                   <>
                     <div className={styles.tableAvailability}>

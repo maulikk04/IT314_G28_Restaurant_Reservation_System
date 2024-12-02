@@ -1,5 +1,5 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
+import React, {useEffect} from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import Navbar1 from "./Navbar1";
 import SlidingBanner from "./SlidingBanner";
 import PopularCuisine from "./PopularCuisines";
@@ -12,10 +12,26 @@ import AboutUs from "./AboutUs";
 import BookTable from "./BookTable";
 import SearchResults from "./SearchResults";
 import styles from "./UserDashboard.module.css";
-
+import { jwtDecode } from "jwt-decode";
 const UserDashboard = () => {
   const [filteredLocation, setFilteredLocation] = React.useState(null);
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!token) {
+      navigate("/login"); // Redirect if no token is found
+      return;
+    }
 
+    try {
+      const decodedToken = jwtDecode(token);
+      if (decodedToken.isOwner) {
+        navigate("/dashboard"); // Redirect if the token belongs to an owner
+      }
+    } catch (error) {
+      navigate("/login"); // Redirect if the token is expired or invalid
+    }
+  }, [token, navigate]);
   return (
     <div className={styles.dashboard}>
       <Navbar1 filterByLocation={setFilteredLocation} />

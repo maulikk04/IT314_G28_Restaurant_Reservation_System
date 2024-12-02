@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './AboutUs.module.css';
+import styles from './ContactUs.module.css';
 import SlidingBanner from '../UserDashboard/SlidingBanner';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaGithub, FaLinkedin } from 'react-icons/fa';
 
@@ -56,11 +56,6 @@ const AboutUs = () => {
       role: "",
       image: require("./profileLogo.png")
     },
-    {
-      name: "Nisarg Parmar",
-      role: "",
-      image: require("./profileLogo.png")
-    }
   ];
 
   const systemDesigningTeam = [
@@ -84,11 +79,10 @@ const AboutUs = () => {
 
   return (
     <div className={styles.aboutContainer}>
-      <SlidingBanner />
       
       {/* Contact Section */}
       <section className={styles.contactSection}>
-        <h2> <center> Get in Touch </center> </h2>
+      <h2> <center> Get in Touch </center></h2>
         <div className={styles.contactGrid}>
           {contactInfo.map((info, index) => (
             <div key={index} className={styles.contactCard}>
@@ -102,7 +96,7 @@ const AboutUs = () => {
 
       {/* About Us Section */}
       <section className={styles.aboutSection}>
-        <h2> <center> Our Story </center></h2>
+      <h2> <center> Our Story </center></h2>
         <div className={styles.storyContent}>
           <p>
             Born from a midnight craving and a college deadline, Fork & Feast is what happens 

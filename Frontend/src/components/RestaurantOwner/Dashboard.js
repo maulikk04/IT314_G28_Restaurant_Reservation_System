@@ -119,11 +119,6 @@ const Dashboard = () => {
     }
   };
   const onSave = async (newRestaurant) => {
-    // Add the imageUrl to the new restaurant
-    // const restaurantdata = {
-    //   ...newRestaurant,
-    //   imageUrl: `http://localhost:4000/restaurant/images/${newRestaurant.image}`
-    // };
     console.log("1", newRestaurant)
     const formattedRestaurant = {
       ...newRestaurant,
