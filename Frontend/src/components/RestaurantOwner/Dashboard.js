@@ -119,11 +119,6 @@ const Dashboard = () => {
     }
   };
   const onSave = async (newRestaurant) => {
-    // Add the imageUrl to the new restaurant
-    // const restaurantdata = {
-    //   ...newRestaurant,
-    //   imageUrl: `http://localhost:4000/restaurant/images/${newRestaurant.image}`
-    // };
     console.log("1", newRestaurant)
     const formattedRestaurant = {
       ...newRestaurant,
@@ -140,7 +135,11 @@ const Dashboard = () => {
   const filteredRestaurants = restaurants.filter((restaurant) =>
     restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
     (filterCuisine === '' || 
-     (restaurant.cuisines && restaurant.cuisines.toLowerCase().includes(filterCuisine.toLowerCase())))
+     (restaurant.cuisines && 
+      restaurant.cuisines.toLowerCase().split(',').some(cuisine => 
+        cuisine.trim().toLowerCase().includes(filterCuisine.toLowerCase())
+      ))
+    )
   );
   
   const handleAddRestaurantClose = () => {

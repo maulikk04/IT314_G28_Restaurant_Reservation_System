@@ -9,6 +9,8 @@ import UserDashboard from './components/UserDashboard/UserDashboard';
 import AddRestaurant from './components/RestaurantOwner/AddRestaurantform'; // Import your AddRestaurant component
 import Reservation  from './components/RestaurantOwner/reservation';
 import Profile from './components/RestaurantOwner/Profile';
+import ContactUs from './components/RestaurantOwner/ContactUs';
+
 const App = () => {
   return (
     <Router>
@@ -39,6 +41,8 @@ const App = () => {
         <Route path="/restaurant/:id/reservations" element={<Reservation />} />
 
         <Route path="/profile" element={<Profile />} /> 
+
+        <Route path="/contactus" element={<ContactUs />} /> 
         {/* Redirect any unknown paths to the landing page */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

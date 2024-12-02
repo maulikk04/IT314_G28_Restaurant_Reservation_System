@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Navbar1.module.css";
 import fetchRestaurants from "./restaurantData";
+import profileLogo from "./profileLogo.png";
 
 const Navbar1 = ({ filterByLocation }) => {
   const navigate = useNavigate();
@@ -175,12 +176,12 @@ const Navbar1 = ({ filterByLocation }) => {
           className={styles.profile}
           onClick={() => setShowProfileDropdown(!showProfileDropdown)}
         >
-          <button className={styles.profileBtn}>VG</button>
+          <img src={profileLogo} alt="Profile Logo" className={styles.profileBtn} />
           {showProfileDropdown && (
             <div className={styles.profileDropdown}>
               <button onClick={() => navigate("/user-dashboard/profile")}>My Profile</button>
               <button onClick={() => navigate("/user-dashboard/bookings")}>Bookings</button>
-              <button onClick={() => navigate("/user-dashboard/favourites")}>Favourites</button>
+              <button onClick= {handleLogout} > Log out </button>
             </div>
           )}
         </div>

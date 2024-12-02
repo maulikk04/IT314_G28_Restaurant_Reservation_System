@@ -6,8 +6,7 @@ const useWebSocket = (restaurantId) => {
   const [isConnected, setIsConnected] = useState(false);
 
   const connect = useCallback(() => {
-    console.log(process.env.REACT_APP_WS_URL);
-    const wsUrl = `ws://localhost:4000/ws`;
+    const wsUrl = `${process.env.REACT_APP_WS_URL}/ws`;
     const newWs = new WebSocket(wsUrl);
 
     newWs.onopen = () => {

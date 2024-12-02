@@ -14,7 +14,7 @@ const Reservation = () => {
         try {
             setLoading(true);
             const response = await fetch(
-                `${process.env.REACT_APP_API_URL}/reservation/${id}`,
+                `${process.env.REACT_APP_API_URL}/reservation/owner/${id}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
