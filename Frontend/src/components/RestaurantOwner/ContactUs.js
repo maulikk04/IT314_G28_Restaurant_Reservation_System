@@ -67,7 +67,7 @@ const AboutUs = () => {
     },
     {
       name: "Harshil Parmar",
-      role: "Full-Stack Contributor",
+      role: "",
       image: require("./profileLogo.png")
     },
     {
