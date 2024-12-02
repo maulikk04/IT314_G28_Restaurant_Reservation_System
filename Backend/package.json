@@ -5,7 +5,9 @@
   "scripts": {
     "test": "mocha",
     "test:userController": "mocha test/userController_test.js",
+    "test:restaurantController":"mocha test/restaurantController_test.js",
     "test:mutation:user": "stryker run stryker.user.config.json",
+    "test:mutation:restaurant": "stryker run stryker.restaurant.config.json",
     "coverage": "nyc --reporter=lcov --reporter=text npm run test",
     "coverage:userController": "nyc --reporter=lcov --reporter=text mocha test/userController_test.js",
     "start": "node app.js",

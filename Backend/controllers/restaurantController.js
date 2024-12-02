@@ -8,12 +8,6 @@ const isValidTimeRange = (openTime, closeTime) => {
     const openingMinutes = openHour * 60 + openMinute;
     const closingMinutes = closeHour * 60 + closeMinute;
 
-    // If closing time is smaller than opening time, it means it's past midnight
-    // In this case, we add 24 hours (1440 minutes) to the closing time for comparison
-    if (closingMinutes < openingMinutes) {
-        return (closingMinutes + 1440) > openingMinutes;
-    }
-
     return closingMinutes > openingMinutes;
 };
 
@@ -112,4 +106,4 @@ const updateRestaurant = async (req, res) => {
 }
 
 
-module.exports = { addRestaurant, allRestaurant, updateRestaurant,GetRestaurantById };
+module.exports = { addRestaurant, allRestaurant, updateRestaurant,GetRestaurantById,isValidTimeRange };
