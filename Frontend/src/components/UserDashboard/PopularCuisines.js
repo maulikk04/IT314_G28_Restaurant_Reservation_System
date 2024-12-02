@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import styles from "./PopularCuisines.module.css";
 
 const PopularCuisine = () => {
-  const cuisines = ["Indian", "Chinese", "Mexican", "Italian", "Japanese"];
   const navigate = useNavigate();
+  const cuisines = ['Mexican', 'Indian', 'Italian', 'Japanese', 'Chinese', 'Fast-Food', 'Continental', 'Thai'];
 
   const handleCuisineClick = (cuisine) => {
-    navigate(`/user-dashboard/cuisine/${cuisine.toLowerCase()}`);
+    navigate(`/user-dashboard/cuisine/${cuisine}`);
   };
 
   return (

@@ -18,19 +18,34 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
-  if(!token)
-  {
-    navigate('/login?type=owner');
-  }
-  const decodedToken = jwtDecode(token);
-  if(!decodedToken.isOwner)
-  {
-    navigate('/user-dashboard');
-  }
   useEffect(() => {
+    // Check token and validation in useEffect to ensure we're in browser environment
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      navigate('/login?type=owner');
+      return; // Exit early if no token
+    }
+
+    try {
+      const decodedToken = jwtDecode(token);
+      if (!decodedToken.isOwner) {
+        navigate('/user-dashboard');
+        return;
+      }
+    } catch (error) {
+      console.error('Token validation error:', error);
+      localStorage.removeItem('token'); // Clear invalid token
+      navigate('/login?type=owner');
+      return;
+    }
+
+    // Only fetch restaurants if we have a valid token
     fetchRestaurants();
-  }, []);
+  }, [navigate]);
+  // useEffect(() => {
+  //   fetchRestaurants();
+  // }, []);
   
 
   const fetchRestaurants = async () => {
@@ -104,11 +119,6 @@ const Dashboard = () => {
     }
   };
   const onSave = async (newRestaurant) => {
-    // Add the imageUrl to the new restaurant
-    // const restaurantdata = {
-    //   ...newRestaurant,
-    //   imageUrl: `http://localhost:4000/restaurant/images/${newRestaurant.image}`
-    // };
     console.log("1", newRestaurant)
     const formattedRestaurant = {
       ...newRestaurant,
@@ -125,7 +135,11 @@ const Dashboard = () => {
   const filteredRestaurants = restaurants.filter((restaurant) =>
     restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
     (filterCuisine === '' || 
-     (restaurant.cuisines && restaurant.cuisines.toLowerCase().includes(filterCuisine.toLowerCase())))
+     (restaurant.cuisines && 
+      restaurant.cuisines.toLowerCase().split(',').some(cuisine => 
+        cuisine.trim().toLowerCase().includes(filterCuisine.toLowerCase())
+      ))
+    )
   );
   
   const handleAddRestaurantClose = () => {
@@ -227,6 +241,7 @@ const Dashboard = () => {
             filteredRestaurants.map((restaurant) => (
               <RestaurantCard
                 key={restaurant._id}
+                id = {restaurant._id}
                 name={restaurant.name}
                 cuisine={restaurant.cuisines}
                 image={restaurant.imageUrl}

@@ -7,4 +7,8 @@ router.post('/checkAvailability',validatetoken, reservationController.checkAvail
 router.post('/createReservation',validatetoken,reservationController.createReservation);
 router.put('/updateReservation/:reservationId', validatetoken, reservationController.updateReservation)
 router.delete('/deleteReservation/:reservationId', validatetoken, reservationController.deleteReservation);
+router.get('/owner/:restaurantId', reservationController.getRestaurantReservations);
+router.post('/:restaurantId/mark-viewed', reservationController.markReservationsAsViewed);
+router.get('/user-reservations', validatetoken, reservationController.getUserReservations);
+router.get('/:reservationId', validatetoken, reservationController.getReservation);
 module.exports = router;

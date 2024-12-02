@@ -1,26 +1,12 @@
 const restaurant = require('../model/restaurantmodel');
 const mongoose = require('mongoose');
 
-let gfsBucket;
-const conn = mongoose.connection;
-conn.once('open', () => {
-    gfsBucket = new mongoose.mongo.GridFSBucket(conn.db, {
-        bucketName: 'uploads'
-    });
-});
-
 const isValidTimeRange = (openTime, closeTime) => {
     const [openHour, openMinute] = openTime.split(':').map(Number);
     const [closeHour, closeMinute] = closeTime.split(':').map(Number);
 
     const openingMinutes = openHour * 60 + openMinute;
     const closingMinutes = closeHour * 60 + closeMinute;
-
-    // If closing time is smaller than opening time, it means it's past midnight
-    // In this case, we add 24 hours (1440 minutes) to the closing time for comparison
-    if (closingMinutes < openingMinutes) {
-        return (closingMinutes + 1440) > openingMinutes;
-    }
 
     return closingMinutes > openingMinutes;
 };
@@ -97,28 +83,20 @@ const updateRestaurant = async (req, res) => {
         if (!Restaurant) {
             return res.status(404).json({ message: 'Restaurant not found or unauthorized access' });
         }
-        if (name) Restaurant.name = name;
-        if (location) Restaurant.location = location;
-        if (capacity) Restaurant.capacity = JSON.parse(capacity);
-        if (cuisines) {
-            Restaurant.cuisines = cuisines
-        }
+        Restaurant.name = name;
+        Restaurant.location = location;
+        Restaurant.capacity = JSON.parse(capacity);
+        Restaurant.cuisines = cuisines
+    
 
-        if (features) {
-            Restaurant.features = features
-        }
-        if (specialDishes) {
-            Restaurant.specialDishes = specialDishes
-        }
-        if (openingTime) Restaurant.openingTime = openingTime;
-        if (closingTime) Restaurant.closingTime = closingTime;
-        if (phoneNumber) Restaurant.phoneNumber = phoneNumber;
-        if (req.files.image) {
-            Restaurant.image = req.files.image.map(file => file.filename);
-        }
-        if (req.files.menuImage) {
-            Restaurant.menuImage = req.files.menuImage.map(file => file.filename);
-        }
+        Restaurant.features = features
+        Restaurant.specialDishes = specialDishes
+        Restaurant.openingTime = openingTime;
+        Restaurant.closingTime = closingTime;
+        Restaurant.phoneNumber = phoneNumber;
+        Restaurant.image = req.files.image.map(file => file.filename);
+        
+        Restaurant.menuImage = req.files.menuImage.map(file => file.filename);
         await Restaurant.save();
         res.status(200).json({ message: 'Restaurant updated successfully', restaurant: Restaurant });
     } catch (error) {
@@ -128,4 +106,4 @@ const updateRestaurant = async (req, res) => {
 }
 
 
-module.exports = { addRestaurant, allRestaurant, updateRestaurant,GetRestaurantById };
+module.exports = { addRestaurant, allRestaurant, updateRestaurant,GetRestaurantById,isValidTimeRange };

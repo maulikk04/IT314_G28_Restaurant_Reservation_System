@@ -245,4 +245,22 @@ const resetPassword = async (req, res) => {
     }
 }
 
-module.exports = { isDomainValid, signup_post, login_post, forgotPassword, resetPassword, confirmEmail, sendresetpasswordmail, sendConfirmationEmail, errorHandle };
+const getAllUsers = async (req, res) => {
+    try {
+        // No authentication required, fetch all users
+        const userData = await usermodel.find({})
+            .select('name email isOwner'); // Select only needed fields
+        res.status(200).json({ 
+            success: true,
+            userData: userData 
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to fetch users' 
+        });
+    }
+};
+
+module.exports = { isDomainValid, signup_post, login_post, forgotPassword, getAllUsers, resetPassword, confirmEmail, sendresetpasswordmail, sendConfirmationEmail, errorHandle };

@@ -1,0 +1,9 @@
+/* src/Footer.css */
+.footer {
+    text-align: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7); /* Darker background for footer */
+    color: white;
+    position: relative; /* Default positioning */
+  }
+  

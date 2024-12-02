@@ -34,4 +34,6 @@ router.get('/failure', (req, res) => {
    //res.status(401).json({ error: 'User Not Registered' });
 });
 
+router.get('/user-data', userController.getAllUsers);
+
 module.exports = router;

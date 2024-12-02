@@ -10,6 +10,8 @@
     position: sticky;
     top: 0;
     z-index: 1000;
+    position: relative;
+    height: 70px;
 }
 
 
@@ -75,18 +77,19 @@
 /* Search Bar */
 .searchBar {
     flex: 1;
-    margin: 0 20px;
+    margin: 0;
     padding: 10px 15px;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 8px 0 0 8px;
     font-size: 1rem;
+    width: 100%;
 }
 
 /* Right Section (About Us, Member, Profile) */
 .rightSection {
     display: flex;
     align-items: center;
-    gap: 20px; /* Add spacing between About Us, Member, and Profile */
+    gap: 15px; /* Add spacing between About Us, Member, and Profile */
 }
 
 .optionButton {
@@ -109,11 +112,11 @@
 }
 
 .profileBtn {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background-color: #ff6f61;
-    color: white;
+    color: #ff6f61;
     font-size: 1rem;
     font-weight: bold;
     border: none;
@@ -153,4 +156,101 @@
 
 .profileDropdown button:hover {
     background-color: #f5f5f5;
+}
+
+.searchInputWrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    position: relative;
+}
+
+.searchButton {
+    padding: 10px 20px;
+    background-color: #ff6f61;
+    color: white;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    height: 100%;
+    transition: background-color 0.2s;
+}
+
+.searchButton:hover {
+    background-color: #0056b3;
+}
+
+.suggestionItem {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.suggestionName {
+    font-weight: 500;
+    color: #333;
+}
+
+.suggestionDetails {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 2px;
+}
+
+.searchContainer {
+    position: relative;
+    width: 40%;
+    display: flex;
+}
+
+.suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1001;
+}
+
+.suggestionItem {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.suggestionItem:hover {
+    background-color: #f5f5f5;
+}
+
+.suggestionName {
+    font-weight: 500;
+    color: #333;
+}
+
+.suggestionDetails {
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* Optional: Add a backdrop when suggestions are shown */
+.searchBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    display: none;
+}
+
+.searchBackdrop.active {
+    display: block;
 }

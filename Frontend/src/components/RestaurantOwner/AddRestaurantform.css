@@ -8,6 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
   z-index: 1000;
 }
 
@@ -20,6 +21,7 @@
   position: relative;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin: 20px auto;
+  overflow: hidden; /* Added to prevent content from being visible outside the box */
 }
 
 /* Custom Scrollbar Styling */
@@ -61,6 +63,7 @@
   background: white;
   padding: 16px 0;
   z-index: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added to prevent overlapping */
 }
 
 .form {
@@ -143,6 +146,8 @@ textarea:focus {
   background: white;
   padding: 16px 0;
   border-top: 1px solid #e0e0e0;
+  z-index: 2; /* Adjusted to ensure buttons are not overlapped */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added to prevent overlapping */
 }
 
 .buttons button {
@@ -173,7 +178,7 @@ textarea:focus {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
+  width: 150vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.95);
   display: flex;
