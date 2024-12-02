@@ -48,7 +48,7 @@ const AboutUs = () => {
     },
     {
       name: "Rit Tambodia",
-      role: "Full-Stack Contributor",
+      role: "",
       image: require("./profileLogo.png")
     },
     {
@@ -72,7 +72,7 @@ const AboutUs = () => {
     },
     {
       name: "Harshil Parmar",
-      role: "Full-Stack Contributor",
+      role: "",
       image: require("./profileLogo.png")
     },
     {
@@ -88,7 +88,7 @@ const AboutUs = () => {
       
       {/* Contact Section */}
       <section className={styles.contactSection}>
-        <h2>Get in Touch</h2>
+        <h2> <center> Get in Touch </center> </h2>
         <div className={styles.contactGrid}>
           {contactInfo.map((info, index) => (
             <div key={index} className={styles.contactCard}>
@@ -102,7 +102,7 @@ const AboutUs = () => {
 
       {/* About Us Section */}
       <section className={styles.aboutSection}>
-        <h2>Our Story</h2>
+        <h2> <center> Our Story </center></h2>
         <div className={styles.storyContent}>
           <p>
             Born from a midnight craving and a college deadline, Fork & Feast is what happens 
@@ -128,7 +128,7 @@ const AboutUs = () => {
 
       {/* Fun Facts Section */}
       <section className={styles.funFactsSection}>
-        <h2>Fun Facts</h2>
+        <h2> <center> Fun Facts </center></h2>
         <div className={styles.factsList}>
           <div className={styles.factCard}>
             <h3>💻 Lines of Code Written</h3>
